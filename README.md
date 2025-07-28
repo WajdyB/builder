@@ -114,14 +114,10 @@ For production, use a hosted PostgreSQL service like:
 
 ## Environment Variables
 
-\`\`\`env
+
 DATABASE_URL="postgresql://..."
 NEXTAUTH_URL="https://your-domain.com"
 NEXTAUTH_SECRET="your-secret-key"
 GOOGLE_CLIENT_ID="your-google-client-id" # Optional
 GOOGLE_CLIENT_SECRET="your-google-client-secret" # Optional
-\`\`\`
 
-## License
-
-MIT License - see LICENSE file for details

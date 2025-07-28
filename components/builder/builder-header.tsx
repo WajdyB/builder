@@ -40,7 +40,7 @@ export function BuilderHeader({ project, currentPage, onTogglePageManager }: Bui
   const [isSaving, setIsSaving] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
 
-  const { deviceMode, setDeviceMode, undo, redo, canUndo, canRedo } = useBuilderStore()
+  const { deviceMode, setDeviceMode, undo, redo, canUndo, canRedo, elements } = useBuilderStore()
   const { theme, setTheme } = useTheme()
 
   const handleSave = async () => {
@@ -100,6 +100,12 @@ export function BuilderHeader({ project, currentPage, onTogglePageManager }: Bui
       }
     }
     setIsEditing(false)
+  }
+
+  const handlePreviewToggle = () => {
+    setIsPreview(!isPreview)
+    // Emit a custom event to notify other components about preview mode
+    window.dispatchEvent(new CustomEvent('previewModeToggle', { detail: { isPreview: !isPreview } }))
   }
 
   return (
@@ -186,9 +192,10 @@ export function BuilderHeader({ project, currentPage, onTogglePageManager }: Bui
           </Button>
         </div>
 
-        <Button variant={isPreview ? "default" : "ghost"} size="sm" onClick={() => setIsPreview(!isPreview)}>
+        <Button variant={isPreview ? "default" : "ghost"} size="sm" onClick={handlePreviewToggle}>
           <Eye className="w-4 h-4 mr-2" />
           Preview
+          <span className="ml-2 text-xs opacity-60">Ctrl+P</span>
         </Button>
       </div>
 

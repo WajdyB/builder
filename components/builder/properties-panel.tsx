@@ -1,383 +1,1115 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useBuilderStore } from "@/lib/store/builder-store"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Type, Palette, Layout, Move, Trash2, Copy, Lock } from "lucide-react"
-import { useBuilderStore } from "@/lib/store/builder-store"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Slider } from "@/components/ui/slider"
+import { Separator } from "@/components/ui/separator"
+import { 
+  Type, 
+  Palette, 
+  Layout, 
+  Move, 
+  Link as LinkIcon,
+  Image as ImageIcon,
+  Settings,
+  FileText,
+  MessageSquare,
+  Mail,
+  DollarSign,
+  User,
+  Globe,
+  Video,
+  Grid3X3,
+  Layers,
+  CheckSquare,
+  Circle,
+  ChevronDown,
+  Tag,
+  Play,
+  Share2,
+  HelpCircle,
+  Copy,
+  Trash2
+} from "lucide-react"
 
-interface Element {
-  id: string
-  type: string
-  properties: Record<string, any>
-}
-
-interface PropertiesPanelProps {
-  selectedElement: Element | null
-}
-
-export function PropertiesPanel({ selectedElement }: PropertiesPanelProps) {
-  const updateElement = useBuilderStore((state) => state.updateElement)
-  const deleteElement = useBuilderStore((state) => state.deleteElement)
-  const duplicateElement = useBuilderStore((state) => state.duplicateElement)
-
-  const [properties, setProperties] = useState(selectedElement?.properties || {})
-
-  // Sync local state with selectedElement
-  useEffect(() => {
-    setProperties(selectedElement?.properties || {})
-  }, [selectedElement])
+export function PropertiesPanel() {
+  const { selectedElement, updateElement, deleteElement, duplicateElement } = useBuilderStore()
 
   if (!selectedElement) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Properties</h2>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-slate-500 dark:text-slate-400">
-            <Layout className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Select an element to edit its properties</p>
-          </div>
+      <div className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 p-4">
+        <div className="text-center text-slate-500 dark:text-slate-400">
+          <Settings className="w-8 h-8 mx-auto mb-2" />
+          <p>Select a component to edit its properties</p>
         </div>
       </div>
     )
   }
 
-  const updateProperty = (key: string, value: any) => {
-    setProperties((prev) => ({ ...prev, [key]: value }))
-    updateElement(selectedElement.id, { [key]: value })
+  const handlePropertyChange = (property: string, value: any) => {
+    updateElement(selectedElement.id, { [property]: value })
+  }
+
+  const handleDelete = () => {
+    if (selectedElement) {
+      deleteElement(selectedElement.id)
+    }
+  }
+
+  const handleDuplicate = () => {
+    if (selectedElement) {
+      duplicateElement(selectedElement.id)
+    }
+  }
+
+  const renderTextProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Text Content</Label>
+          <Textarea
+            value={selectedElement.properties.text || ""}
+            onChange={(e) => handlePropertyChange("text", e.target.value)}
+            placeholder="Enter your text content..."
+            rows={4}
+          />
+        </div>
+        <div>
+          <Label>Font Family</Label>
+          <Select value={selectedElement.properties.fontFamily || "Inter"} onValueChange={(value) => handlePropertyChange("fontFamily", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Inter">Inter</SelectItem>
+              <SelectItem value="Arial">Arial</SelectItem>
+              <SelectItem value="Helvetica">Helvetica</SelectItem>
+              <SelectItem value="Georgia">Georgia</SelectItem>
+              <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Font Weight</Label>
+          <Select value={selectedElement.properties.fontWeight || "normal"} onValueChange={(value) => handlePropertyChange("fontWeight", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="bold">Bold</SelectItem>
+              <SelectItem value="100">Thin</SelectItem>
+              <SelectItem value="300">Light</SelectItem>
+              <SelectItem value="500">Medium</SelectItem>
+              <SelectItem value="700">Semi Bold</SelectItem>
+              <SelectItem value="900">Black</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Text Alignment</Label>
+          <Select value={selectedElement.properties.textAlign || "left"} onValueChange={(value) => handlePropertyChange("textAlign", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="left">Left</SelectItem>
+              <SelectItem value="center">Center</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
+              <SelectItem value="justify">Justify</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderHeadingProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Heading Text</Label>
+          <Input
+            value={selectedElement.properties.text || ""}
+            onChange={(e) => handlePropertyChange("text", e.target.value)}
+            placeholder="Enter your heading..."
+          />
+        </div>
+        <div>
+          <Label>Heading Level</Label>
+          <Select value={selectedElement.properties.headingLevel || "h1"} onValueChange={(value) => handlePropertyChange("headingLevel", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="h1">H1 - Main Heading</SelectItem>
+              <SelectItem value="h2">H2 - Section Heading</SelectItem>
+              <SelectItem value="h3">H3 - Subsection</SelectItem>
+              <SelectItem value="h4">H4 - Minor Heading</SelectItem>
+              <SelectItem value="h5">H5 - Small Heading</SelectItem>
+              <SelectItem value="h6">H6 - Tiny Heading</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Font Family</Label>
+          <Select value={selectedElement.properties.fontFamily || "Inter"} onValueChange={(value) => handlePropertyChange("fontFamily", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Inter">Inter</SelectItem>
+              <SelectItem value="Arial">Arial</SelectItem>
+              <SelectItem value="Helvetica">Helvetica</SelectItem>
+              <SelectItem value="Georgia">Georgia</SelectItem>
+              <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Font Weight</Label>
+          <Select value={selectedElement.properties.fontWeight || "bold"} onValueChange={(value) => handlePropertyChange("fontWeight", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="bold">Bold</SelectItem>
+              <SelectItem value="100">Thin</SelectItem>
+              <SelectItem value="300">Light</SelectItem>
+              <SelectItem value="500">Medium</SelectItem>
+              <SelectItem value="700">Semi Bold</SelectItem>
+              <SelectItem value="900">Black</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderParagraphProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Paragraph Text</Label>
+          <Textarea
+            value={selectedElement.properties.text || ""}
+            onChange={(e) => handlePropertyChange("text", e.target.value)}
+            placeholder="Enter your paragraph content..."
+            rows={6}
+          />
+        </div>
+        <div>
+          <Label>Line Height</Label>
+          <Select value={selectedElement.properties.lineHeight || "1.6"} onValueChange={(value) => handlePropertyChange("lineHeight", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1.2">Tight (1.2)</SelectItem>
+              <SelectItem value="1.4">Normal (1.4)</SelectItem>
+              <SelectItem value="1.6">Relaxed (1.6)</SelectItem>
+              <SelectItem value="1.8">Loose (1.8)</SelectItem>
+              <SelectItem value="2.0">Very Loose (2.0)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Text Alignment</Label>
+          <Select value={selectedElement.properties.textAlign || "left"} onValueChange={(value) => handlePropertyChange("textAlign", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="left">Left</SelectItem>
+              <SelectItem value="center">Center</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
+              <SelectItem value="justify">Justify</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderLinkProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Link Text</Label>
+          <Input
+            value={selectedElement.properties.text || ""}
+            onChange={(e) => handlePropertyChange("text", e.target.value)}
+            placeholder="Enter link text..."
+          />
+        </div>
+        <div>
+          <Label>URL</Label>
+          <Input
+            value={selectedElement.properties.href || ""}
+            onChange={(e) => handlePropertyChange("href", e.target.value)}
+            placeholder="https://example.com"
+          />
+        </div>
+        <div>
+          <Label>Target</Label>
+          <Select value={selectedElement.properties.target || "_self"} onValueChange={(value) => handlePropertyChange("target", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_self">Same Window</SelectItem>
+              <SelectItem value="_blank">New Window</SelectItem>
+              <SelectItem value="_parent">Parent Frame</SelectItem>
+              <SelectItem value="_top">Top Frame</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Link Style</Label>
+          <Select value={selectedElement.properties.linkStyle || "default"} onValueChange={(value) => handlePropertyChange("linkStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="button">Button Style</SelectItem>
+              <SelectItem value="underline">Underline Only</SelectItem>
+              <SelectItem value="icon">Icon Link</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderButtonProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Button Text</Label>
+          <Input
+            value={selectedElement.properties.text || ""}
+            onChange={(e) => handlePropertyChange("text", e.target.value)}
+            placeholder="Enter button text..."
+          />
+        </div>
+        <div>
+          <Label>Button Style</Label>
+          <Select value={selectedElement.properties.buttonStyle || "primary"} onValueChange={(value) => handlePropertyChange("buttonStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="primary">Primary</SelectItem>
+              <SelectItem value="secondary">Secondary</SelectItem>
+              <SelectItem value="outline">Outline</SelectItem>
+              <SelectItem value="ghost">Ghost</SelectItem>
+              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="danger">Danger</SelectItem>
+              <SelectItem value="warning">Warning</SelectItem>
+              <SelectItem value="info">Info</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Button Size</Label>
+          <Select value={selectedElement.properties.buttonSize || "default"} onValueChange={(value) => handlePropertyChange("buttonSize", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="small">Small</SelectItem>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="large">Large</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Action URL</Label>
+          <Input
+            value={selectedElement.properties.href || ""}
+            onChange={(e) => handlePropertyChange("href", e.target.value)}
+            placeholder="https://example.com"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={selectedElement.properties.disabled || false}
+            onCheckedChange={(checked) => handlePropertyChange("disabled", checked)}
+          />
+          <Label>Disabled</Label>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderImageProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Image URL</Label>
+          <Input
+            value={selectedElement.properties.src || ""}
+            onChange={(e) => handlePropertyChange("src", e.target.value)}
+            placeholder="https://example.com/image.jpg"
+          />
+        </div>
+        <div>
+          <Label>Alt Text</Label>
+          <Input
+            value={selectedElement.properties.alt || ""}
+            onChange={(e) => handlePropertyChange("alt", e.target.value)}
+            placeholder="Describe the image..."
+          />
+        </div>
+        <div>
+          <Label>Image Style</Label>
+          <Select value={selectedElement.properties.imageStyle || "default"} onValueChange={(value) => handlePropertyChange("imageStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="rounded">Rounded</SelectItem>
+              <SelectItem value="circle">Circle</SelectItem>
+              <SelectItem value="bordered">Bordered</SelectItem>
+              <SelectItem value="shadow">With Shadow</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Object Fit</Label>
+          <Select value={selectedElement.properties.objectFit || "cover"} onValueChange={(value) => handlePropertyChange("objectFit", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cover">Cover</SelectItem>
+              <SelectItem value="contain">Contain</SelectItem>
+              <SelectItem value="fill">Fill</SelectItem>
+              <SelectItem value="none">None</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={selectedElement.properties.lazy || false}
+            onCheckedChange={(checked) => handlePropertyChange("lazy", checked)}
+          />
+          <Label>Lazy Loading</Label>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderHeroProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Main Heading</Label>
+          <Input
+            value={selectedElement.properties.heading || ""}
+            onChange={(e) => handlePropertyChange("heading", e.target.value)}
+            placeholder="Enter main heading..."
+          />
+        </div>
+        <div>
+          <Label>Subheading</Label>
+          <Textarea
+            value={selectedElement.properties.subheading || ""}
+            onChange={(e) => handlePropertyChange("subheading", e.target.value)}
+            placeholder="Enter subheading text..."
+            rows={3}
+          />
+        </div>
+        <div>
+          <Label>Button Text</Label>
+          <Input
+            value={selectedElement.properties.buttonText || ""}
+            onChange={(e) => handlePropertyChange("buttonText", e.target.value)}
+            placeholder="Get Started"
+          />
+        </div>
+        <div>
+          <Label>Button URL</Label>
+          <Input
+            value={selectedElement.properties.buttonUrl || ""}
+            onChange={(e) => handlePropertyChange("buttonUrl", e.target.value)}
+            placeholder="https://example.com"
+          />
+        </div>
+        <div>
+          <Label>Hero Style</Label>
+          <Select value={selectedElement.properties.heroStyle || "default"} onValueChange={(value) => handlePropertyChange("heroStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="modern">Modern</SelectItem>
+              <SelectItem value="dark">Dark</SelectItem>
+              <SelectItem value="light">Light</SelectItem>
+              <SelectItem value="gradient">Gradient</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Background Image</Label>
+          <Input
+            value={selectedElement.properties.backgroundImage || ""}
+            onChange={(e) => handlePropertyChange("backgroundImage", e.target.value)}
+            placeholder="https://example.com/bg.jpg"
+          />
+        </div>
+      </div>
+    </>
+  )
+
+  const renderNavigationProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Logo Text</Label>
+          <Input
+            value={selectedElement.properties.logoText || ""}
+            onChange={(e) => handlePropertyChange("logoText", e.target.value)}
+            placeholder="Your Logo"
+          />
+        </div>
+        <div>
+          <Label>Menu Items</Label>
+          <Textarea
+            value={selectedElement.properties.menuItems || ""}
+            onChange={(e) => handlePropertyChange("menuItems", e.target.value)}
+            placeholder="Home, About, Services, Contact"
+            rows={3}
+          />
+        </div>
+        <div>
+          <Label>Navigation Style</Label>
+          <Select value={selectedElement.properties.navStyle || "default"} onValueChange={(value) => handlePropertyChange("navStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="centered">Centered</SelectItem>
+              <SelectItem value="minimal">Minimal</SelectItem>
+              <SelectItem value="dark">Dark</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={selectedElement.properties.sticky || false}
+            onCheckedChange={(checked) => handlePropertyChange("sticky", checked)}
+          />
+          <Label>Sticky Navigation</Label>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderFormProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Form Title</Label>
+          <Input
+            value={selectedElement.properties.formTitle || ""}
+            onChange={(e) => handlePropertyChange("formTitle", e.target.value)}
+            placeholder="Contact Us"
+          />
+        </div>
+        <div>
+          <Label>Form Fields</Label>
+          <Textarea
+            value={selectedElement.properties.formFields || ""}
+            onChange={(e) => handlePropertyChange("formFields", e.target.value)}
+            placeholder="Name, Email, Message"
+            rows={3}
+          />
+        </div>
+        <div>
+          <Label>Submit Button Text</Label>
+          <Input
+            value={selectedElement.properties.submitText || ""}
+            onChange={(e) => handlePropertyChange("submitText", e.target.value)}
+            placeholder="Send Message"
+          />
+        </div>
+        <div>
+          <Label>Form Style</Label>
+          <Select value={selectedElement.properties.formStyle || "default"} onValueChange={(value) => handlePropertyChange("formStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="card">Card Style</SelectItem>
+              <SelectItem value="minimal">Minimal</SelectItem>
+              <SelectItem value="floating">Floating Labels</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderPricingProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Plan Name</Label>
+          <Input
+            value={selectedElement.properties.planName || ""}
+            onChange={(e) => handlePropertyChange("planName", e.target.value)}
+            placeholder="Pro Plan"
+          />
+        </div>
+        <div>
+          <Label>Price</Label>
+          <Input
+            value={selectedElement.properties.price || ""}
+            onChange={(e) => handlePropertyChange("price", e.target.value)}
+            placeholder="$29"
+          />
+        </div>
+        <div>
+          <Label>Billing Period</Label>
+          <Select value={selectedElement.properties.billingPeriod || "month"} onValueChange={(value) => handlePropertyChange("billingPeriod", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="month">Per Month</SelectItem>
+              <SelectItem value="year">Per Year</SelectItem>
+              <SelectItem value="one-time">One Time</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Features</Label>
+          <Textarea
+            value={selectedElement.properties.features || ""}
+            onChange={(e) => handlePropertyChange("features", e.target.value)}
+            placeholder="Feature 1, Feature 2, Feature 3"
+            rows={4}
+          />
+        </div>
+        <div>
+          <Label>Button Text</Label>
+          <Input
+            value={selectedElement.properties.buttonText || ""}
+            onChange={(e) => handlePropertyChange("buttonText", e.target.value)}
+            placeholder="Choose Plan"
+          />
+        </div>
+        <div>
+          <Label>Pricing Style</Label>
+          <Select value={selectedElement.properties.pricingStyle || "default"} onValueChange={(value) => handlePropertyChange("pricingStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="featured">Featured</SelectItem>
+              <SelectItem value="minimal">Minimal</SelectItem>
+              <SelectItem value="card">Card Style</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderTestimonialProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Quote Text</Label>
+          <Textarea
+            value={selectedElement.properties.quote || ""}
+            onChange={(e) => handlePropertyChange("quote", e.target.value)}
+            placeholder="Enter the testimonial quote..."
+            rows={4}
+          />
+        </div>
+        <div>
+          <Label>Author Name</Label>
+          <Input
+            value={selectedElement.properties.authorName || ""}
+            onChange={(e) => handlePropertyChange("authorName", e.target.value)}
+            placeholder="John Doe"
+          />
+        </div>
+        <div>
+          <Label>Author Title</Label>
+          <Input
+            value={selectedElement.properties.authorTitle || ""}
+            onChange={(e) => handlePropertyChange("authorTitle", e.target.value)}
+            placeholder="CEO, Company"
+          />
+        </div>
+        <div>
+          <Label>Author Avatar</Label>
+          <Input
+            value={selectedElement.properties.authorAvatar || ""}
+            onChange={(e) => handlePropertyChange("authorAvatar", e.target.value)}
+            placeholder="https://example.com/avatar.jpg"
+          />
+        </div>
+        <div>
+          <Label>Rating</Label>
+          <Select value={selectedElement.properties.rating || "5"} onValueChange={(value) => handlePropertyChange("rating", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1 Star</SelectItem>
+              <SelectItem value="2">2 Stars</SelectItem>
+              <SelectItem value="3">3 Stars</SelectItem>
+              <SelectItem value="4">4 Stars</SelectItem>
+              <SelectItem value="5">5 Stars</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Testimonial Style</Label>
+          <Select value={selectedElement.properties.testimonialStyle || "default"} onValueChange={(value) => handlePropertyChange("testimonialStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="card">Card Style</SelectItem>
+              <SelectItem value="minimal">Minimal</SelectItem>
+              <SelectItem value="quote">Quote Style</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderNewsletterProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Newsletter Title</Label>
+          <Input
+            value={selectedElement.properties.newsletterTitle || ""}
+            onChange={(e) => handlePropertyChange("newsletterTitle", e.target.value)}
+            placeholder="Stay Updated"
+          />
+        </div>
+        <div>
+          <Label>Newsletter Description</Label>
+          <Textarea
+            value={selectedElement.properties.newsletterDescription || ""}
+            onChange={(e) => handlePropertyChange("newsletterDescription", e.target.value)}
+            placeholder="Subscribe to our newsletter for the latest updates"
+            rows={3}
+          />
+        </div>
+        <div>
+          <Label>Placeholder Text</Label>
+          <Input
+            value={selectedElement.properties.placeholder || ""}
+            onChange={(e) => handlePropertyChange("placeholder", e.target.value)}
+            placeholder="Enter your email"
+          />
+        </div>
+        <div>
+          <Label>Button Text</Label>
+          <Input
+            value={selectedElement.properties.buttonText || ""}
+            onChange={(e) => handlePropertyChange("buttonText", e.target.value)}
+            placeholder="Subscribe"
+          />
+        </div>
+        <div>
+          <Label>Newsletter Style</Label>
+          <Select value={selectedElement.properties.newsletterStyle || "default"} onValueChange={(value) => handlePropertyChange("newsletterStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="gradient">Gradient</SelectItem>
+              <SelectItem value="minimal">Minimal</SelectItem>
+              <SelectItem value="card">Card Style</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderSocialProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Social Platforms</Label>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={selectedElement.properties.facebook || false}
+                onCheckedChange={(checked) => handlePropertyChange("facebook", checked)}
+              />
+              <Label>Facebook</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={selectedElement.properties.twitter || false}
+                onCheckedChange={(checked) => handlePropertyChange("twitter", checked)}
+              />
+              <Label>Twitter</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={selectedElement.properties.linkedin || false}
+                onCheckedChange={(checked) => handlePropertyChange("linkedin", checked)}
+              />
+              <Label>LinkedIn</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={selectedElement.properties.instagram || false}
+                onCheckedChange={(checked) => handlePropertyChange("instagram", checked)}
+              />
+              <Label>Instagram</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={selectedElement.properties.youtube || false}
+                onCheckedChange={(checked) => handlePropertyChange("youtube", checked)}
+              />
+              <Label>YouTube</Label>
+            </div>
+          </div>
+        </div>
+        <div>
+          <Label>Social Style</Label>
+          <Select value={selectedElement.properties.socialStyle || "default"} onValueChange={(value) => handlePropertyChange("socialStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="minimal">Minimal</SelectItem>
+              <SelectItem value="rounded">Rounded</SelectItem>
+              <SelectItem value="square">Square</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Size</Label>
+          <Select value={selectedElement.properties.socialSize || "default"} onValueChange={(value) => handlePropertyChange("socialSize", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="small">Small</SelectItem>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="large">Large</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderCommonProperties = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <Label>Width</Label>
+          <Input
+            type="number"
+            value={selectedElement.properties.width || ""}
+            onChange={(e) => handlePropertyChange("width", parseInt(e.target.value))}
+            placeholder="Width in pixels"
+          />
+        </div>
+        <div>
+          <Label>Height</Label>
+          <Input
+            type="number"
+            value={selectedElement.properties.height || ""}
+            onChange={(e) => handlePropertyChange("height", parseInt(e.target.value))}
+            placeholder="Height in pixels"
+          />
+        </div>
+        <div>
+          <Label>Background Color</Label>
+          <Input
+            type="color"
+            value={selectedElement.properties.backgroundColor || "#ffffff"}
+            onChange={(e) => handlePropertyChange("backgroundColor", e.target.value)}
+          />
+        </div>
+        <div>
+          <Label>Text Color</Label>
+          <Input
+            type="color"
+            value={selectedElement.properties.color || "#000000"}
+            onChange={(e) => handlePropertyChange("color", e.target.value)}
+          />
+        </div>
+        <div>
+          <Label>Font Size</Label>
+          <Input
+            type="number"
+            value={selectedElement.properties.fontSize || ""}
+            onChange={(e) => handlePropertyChange("fontSize", parseInt(e.target.value))}
+            placeholder="Font size in pixels"
+          />
+        </div>
+        <div>
+          <Label>Padding</Label>
+          <Input
+            type="number"
+            value={selectedElement.properties.padding || ""}
+            onChange={(e) => handlePropertyChange("padding", parseInt(e.target.value))}
+            placeholder="Padding in pixels"
+          />
+        </div>
+        <div>
+          <Label>Border Radius</Label>
+          <Input
+            type="number"
+            value={selectedElement.properties.borderRadius || ""}
+            onChange={(e) => handlePropertyChange("borderRadius", parseInt(e.target.value))}
+            placeholder="Border radius in pixels"
+          />
+        </div>
+        <div>
+          <Label>Border Width</Label>
+          <Input
+            type="number"
+            value={selectedElement.properties.borderWidth || ""}
+            onChange={(e) => handlePropertyChange("borderWidth", parseInt(e.target.value))}
+            placeholder="Border width in pixels"
+          />
+        </div>
+        <div>
+          <Label>Border Color</Label>
+          <Input
+            type="color"
+            value={selectedElement.properties.borderColor || "#000000"}
+            onChange={(e) => handlePropertyChange("borderColor", e.target.value)}
+          />
+        </div>
+        <div>
+          <Label>Shadow</Label>
+          <Select value={selectedElement.properties.shadow || "none"} onValueChange={(value) => handlePropertyChange("shadow", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="sm">Small</SelectItem>
+              <SelectItem value="md">Medium</SelectItem>
+              <SelectItem value="lg">Large</SelectItem>
+              <SelectItem value="xl">Extra Large</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Z-Index</Label>
+          <Input
+            type="number"
+            value={selectedElement.properties.zIndex || ""}
+            onChange={(e) => handlePropertyChange("zIndex", parseInt(e.target.value))}
+            placeholder="Z-index value"
+          />
+        </div>
+      </div>
+    </>
+  )
+
+  const renderComponentSpecificProperties = () => {
+    switch (selectedElement.type) {
+      case "text":
+        return renderTextProperties()
+      case "heading":
+        return renderHeadingProperties()
+      case "paragraph":
+        return renderParagraphProperties()
+      case "link":
+        return renderLinkProperties()
+      case "button":
+        return renderButtonProperties()
+      case "image":
+        return renderImageProperties()
+      case "hero":
+        return renderHeroProperties()
+      case "navigation":
+        return renderNavigationProperties()
+      case "contact":
+      case "newsletter":
+        return renderFormProperties()
+      case "pricing":
+        return renderPricingProperties()
+      case "testimonial":
+        return renderTestimonialProperties()
+      case "newsletter":
+        return renderNewsletterProperties()
+      case "social":
+        return renderSocialProperties()
+      default:
+        return renderCommonProperties()
+    }
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700">
       <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Properties</h2>
-          <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="sm" onClick={() => duplicateElement(selectedElement.id)}>
-              <Copy className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Lock className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => deleteElement(selectedElement.id)}>
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+        <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+          {selectedElement.type.charAt(0).toUpperCase() + selectedElement.type.slice(1)} Properties
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Customize your {selectedElement.type} component
+        </p>
+        
+        {/* Action Buttons */}
+        <div className="flex space-x-2 mt-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleDuplicate}
+            className="flex-1"
+          >
+            <Copy className="w-4 h-4 mr-2" />
+            Copy
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={handleDelete}
+            className="flex-1"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </Button>
         </div>
-        <div className="text-sm text-slate-600 dark:text-slate-400 capitalize">{selectedElement.type} Element</div>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4">
-          <Tabs defaultValue="content" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="content" className="text-xs">
-                <Type className="w-3 h-3 mr-1" />
-                Content
-              </TabsTrigger>
-              <TabsTrigger value="style" className="text-xs">
-                <Palette className="w-3 h-3 mr-1" />
-                Style
-              </TabsTrigger>
-              <TabsTrigger value="layout" className="text-xs">
-                <Layout className="w-3 h-3 mr-1" />
-                Layout
-              </TabsTrigger>
-              <TabsTrigger value="position" className="text-xs">
-                <Move className="w-3 h-3 mr-1" />
-                Position
-              </TabsTrigger>
-            </TabsList>
+      <Tabs defaultValue="content" className="p-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="content" className="flex items-center space-x-1">
+            <Type className="w-3 h-3" />
+            <span>Content</span>
+          </TabsTrigger>
+          <TabsTrigger value="style" className="flex items-center space-x-1">
+            <Palette className="w-3 h-3" />
+            <span>Style</span>
+          </TabsTrigger>
+          <TabsTrigger value="layout" className="flex items-center space-x-1">
+            <Layout className="w-3 h-3" />
+            <span>Layout</span>
+          </TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="content" className="space-y-4 mt-4">
-              {selectedElement.type === "text" && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Text Content</Label>
-                    <Input
-                      value={properties.text || ""}
-                      onChange={(e) => updateProperty("text", e.target.value)}
-                      placeholder="Enter text..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Font Family</Label>
-                    <Select
-                      value={properties.fontFamily || "inter"}
-                      onValueChange={(value) => updateProperty("fontFamily", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="inter">Inter</SelectItem>
-                        <SelectItem value="roboto">Roboto</SelectItem>
-                        <SelectItem value="arial">Arial</SelectItem>
-                        <SelectItem value="helvetica">Helvetica</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
+        <TabsContent value="content" className="space-y-4 mt-4">
+          {renderComponentSpecificProperties()}
+        </TabsContent>
 
-              {selectedElement.type === "button" && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Button Text</Label>
-                    <Input
-                      value={properties.text || ""}
-                      onChange={(e) => updateProperty("text", e.target.value)}
-                      placeholder="Button text..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Link URL</Label>
-                    <Input
-                      value={properties.href || ""}
-                      onChange={(e) => updateProperty("href", e.target.value)}
-                      placeholder="https://..."
-                    />
-                  </div>
-                </>
-              )}
+        <TabsContent value="style" className="space-y-4 mt-4">
+          {renderCommonProperties()}
+        </TabsContent>
 
-              {selectedElement.type === "image" && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Image URL</Label>
-                    <Input
-                      value={properties.src || ""}
-                      onChange={(e) => updateProperty("src", e.target.value)}
-                      placeholder="Image URL..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Alt Text</Label>
-                    <Input
-                      value={properties.alt || ""}
-                      onChange={(e) => updateProperty("alt", e.target.value)}
-                      placeholder="Alt text..."
-                    />
-                  </div>
-                </>
-              )}
-
-              {selectedElement.type === "input" && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Placeholder Text</Label>
-                    <Input
-                      value={properties.placeholder || ""}
-                      onChange={(e) => updateProperty("placeholder", e.target.value)}
-                      placeholder="Enter placeholder..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Input Type</Label>
-                    <Select
-                      value={properties.inputType || "text"}
-                      onValueChange={(value) => updateProperty("inputType", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">Text</SelectItem>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="password">Password</SelectItem>
-                        <SelectItem value="number">Number</SelectItem>
-                        <SelectItem value="tel">Phone</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-
-              {selectedElement.type === "textarea" && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Placeholder Text</Label>
-                    <Input
-                      value={properties.placeholder || ""}
-                      onChange={(e) => updateProperty("placeholder", e.target.value)}
-                      placeholder="Enter placeholder..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Rows</Label>
-                    <Input
-                      type="number"
-                      value={properties.rows || 3}
-                      onChange={(e) => updateProperty("rows", parseInt(e.target.value) || 3)}
-                      placeholder="3"
-                      min="1"
-                      max="10"
-                    />
-                  </div>
-                </>
-              )}
-
-              {selectedElement.type === "checkbox" && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Label Text</Label>
-                    <Input
-                      value={properties.label || ""}
-                      onChange={(e) => updateProperty("label", e.target.value)}
-                      placeholder="Checkbox label..."
-                    />
-                  </div>
-                </>
-              )}
-            </TabsContent>
-
-            <TabsContent value="style" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Background Color</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="color"
-                    value={properties.backgroundColor || "#ffffff"}
-                    onChange={(e) => updateProperty("backgroundColor", e.target.value)}
-                    className="w-12 h-8 p-1 rounded"
-                  />
-                  <Input
-                    value={properties.backgroundColor || "#ffffff"}
-                    onChange={(e) => updateProperty("backgroundColor", e.target.value)}
-                    placeholder="#ffffff"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Text Color</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="color"
-                    value={properties.color || "#000000"}
-                    onChange={(e) => updateProperty("color", e.target.value)}
-                    className="w-12 h-8 p-1 rounded"
-                  />
-                  <Input
-                    value={properties.color || "#000000"}
-                    onChange={(e) => updateProperty("color", e.target.value)}
-                    placeholder="#000000"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Font Size (px)</Label>
-                <Input
-                  type="number"
-                  value={properties.fontSize || 16}
-                  onChange={(e) => updateProperty("fontSize", parseInt(e.target.value) || 16)}
-                  placeholder="16"
-                  min="8"
-                  max="72"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Border Radius (px)</Label>
-                <Input
-                  type="number"
-                  value={properties.borderRadius || 0}
-                  onChange={(e) => updateProperty("borderRadius", parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                  min="0"
-                  max="50"
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="layout" className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Width (px)</Label>
-                  <Input
-                    type="number"
-                    value={properties.width || 200}
-                    onChange={(e) => updateProperty("width", parseInt(e.target.value) || 0)}
-                    placeholder="200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Height (px)</Label>
-                  <Input
-                    type="number"
-                    value={properties.height || 100}
-                    onChange={(e) => updateProperty("height", parseInt(e.target.value) || 0)}
-                    placeholder="100"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Padding (px)</Label>
-                <Input
-                  type="number"
-                  value={properties.padding || 8}
-                  onChange={(e) => updateProperty("padding", parseInt(e.target.value) || 0)}
-                  placeholder="8"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Border Radius (px)</Label>
-                <Input
-                  type="number"
-                  value={properties.borderRadius || 0}
-                  onChange={(e) => updateProperty("borderRadius", parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="position" className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>X Position (px)</Label>
-                  <Input
-                    type="number"
-                    value={properties.x || 0}
-                    onChange={(e) => updateProperty("x", parseInt(e.target.value) || 0)}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Y Position (px)</Label>
-                  <Input
-                    type="number"
-                    value={properties.y || 0}
-                    onChange={(e) => updateProperty("y", parseInt(e.target.value) || 0)}
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Z-Index</Label>
-                <Input
-                  type="number"
-                  value={properties.zIndex || 0}
-                  onChange={(e) => updateProperty("zIndex", parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </ScrollArea>
+        <TabsContent value="layout" className="space-y-4 mt-4">
+          <div className="space-y-4">
+            <div>
+              <Label>X Position</Label>
+              <Input
+                type="number"
+                value={selectedElement.properties.x || ""}
+                onChange={(e) => handlePropertyChange("x", parseInt(e.target.value))}
+                placeholder="X position"
+              />
+            </div>
+            <div>
+              <Label>Y Position</Label>
+              <Input
+                type="number"
+                value={selectedElement.properties.y || ""}
+                onChange={(e) => handlePropertyChange("y", parseInt(e.target.value))}
+                placeholder="Y position"
+              />
+            </div>
+            <div>
+              <Label>Display</Label>
+              <Select value={selectedElement.properties.display || "block"} onValueChange={(value) => handlePropertyChange("display", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="block">Block</SelectItem>
+                  <SelectItem value="inline">Inline</SelectItem>
+                  <SelectItem value="inline-block">Inline Block</SelectItem>
+                  <SelectItem value="flex">Flex</SelectItem>
+                  <SelectItem value="grid">Grid</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Flex Direction</Label>
+              <Select value={selectedElement.properties.flexDirection || "row"} onValueChange={(value) => handlePropertyChange("flexDirection", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="row">Row</SelectItem>
+                  <SelectItem value="column">Column</SelectItem>
+                  <SelectItem value="row-reverse">Row Reverse</SelectItem>
+                  <SelectItem value="column-reverse">Column Reverse</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Justify Content</Label>
+              <Select value={selectedElement.properties.justifyContent || "flex-start"} onValueChange={(value) => handlePropertyChange("justifyContent", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="flex-start">Start</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="flex-end">End</SelectItem>
+                  <SelectItem value="space-between">Space Between</SelectItem>
+                  <SelectItem value="space-around">Space Around</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Align Items</Label>
+              <Select value={selectedElement.properties.alignItems || "stretch"} onValueChange={(value) => handlePropertyChange("alignItems", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stretch">Stretch</SelectItem>
+                  <SelectItem value="flex-start">Start</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="flex-end">End</SelectItem>
+                  <SelectItem value="baseline">Baseline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { ComponentPanel } from "@/components/builder/component-panel"
 import { PropertiesPanel } from "@/components/builder/properties-panel"
 import { Canvas } from "@/components/builder/canvas"
 import { PageManager } from "@/components/builder/page-manager"
+import { PreviewMode } from "@/components/builder/preview-mode"
 import { useBuilderStore } from "@/lib/store/builder-store"
 import { useAutosave } from "@/lib/hooks/use-autosave"
 import { fetchProject } from "@/lib/api/projects"
@@ -23,11 +24,40 @@ export default function BuilderPage({ params }: { params: { projectId: string } 
   const [project, setProject] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isPreviewMode, setIsPreviewMode] = useState(false)
 
   const { selectedElement, deviceMode, setElements } = useBuilderStore()
 
   // Auto-save functionality
   useAutosave(params.projectId, currentPage?.id || "")
+
+  // Listen for preview mode toggle events
+  useEffect(() => {
+    const handlePreviewToggle = (event: CustomEvent) => {
+      setIsPreviewMode(event.detail.isPreview)
+    }
+
+    window.addEventListener('previewModeToggle', handlePreviewToggle as EventListener)
+    return () => {
+      window.removeEventListener('previewModeToggle', handlePreviewToggle as EventListener)
+    }
+  }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+P to toggle preview mode
+      if (event.ctrlKey && event.key === 'p') {
+        event.preventDefault()
+        setIsPreviewMode(!isPreviewMode)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isPreviewMode])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -194,6 +224,12 @@ export default function BuilderPage({ params }: { params: { projectId: string } 
           <PropertiesPanel selectedElement={selectedElement} />
         </div>
       </div>
+
+      {/* Preview Mode */}
+      <PreviewMode 
+        isVisible={isPreviewMode} 
+        onClose={() => setIsPreviewMode(false)} 
+      />
     </div>
   )
 }
