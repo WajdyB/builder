@@ -43,7 +43,7 @@ export function PropertiesPanel() {
 
   if (!selectedElement) {
     return (
-      <div className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 p-4">
+      <div className="h-full bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 p-4">
         <div className="text-center text-slate-500 dark:text-slate-400">
           <Settings className="w-8 h-8 mx-auto mb-2" />
           <p>Select a component to edit its properties</p>
@@ -76,7 +76,7 @@ export function PropertiesPanel() {
           <Textarea
             value={selectedElement.properties.text || ""}
             onChange={(e) => handlePropertyChange("text", e.target.value)}
-            placeholder="Enter your text content..."
+            placeholder="Enter your text content (leave empty for no text)..."
             rows={4}
           />
         </div>
@@ -138,7 +138,7 @@ export function PropertiesPanel() {
           <Input
             value={selectedElement.properties.text || ""}
             onChange={(e) => handlePropertyChange("text", e.target.value)}
-            placeholder="Enter your heading..."
+            placeholder="Enter your heading (leave empty for no text)..."
           />
         </div>
         <div>
@@ -201,7 +201,7 @@ export function PropertiesPanel() {
           <Textarea
             value={selectedElement.properties.text || ""}
             onChange={(e) => handlePropertyChange("text", e.target.value)}
-            placeholder="Enter your paragraph content..."
+            placeholder="Enter your paragraph content (leave empty for no text)..."
             rows={6}
           />
         </div>
@@ -246,7 +246,7 @@ export function PropertiesPanel() {
           <Input
             value={selectedElement.properties.text || ""}
             onChange={(e) => handlePropertyChange("text", e.target.value)}
-            placeholder="Enter link text..."
+            placeholder="Enter link text (leave empty for no text)..."
           />
         </div>
         <div>
@@ -297,7 +297,7 @@ export function PropertiesPanel() {
           <Input
             value={selectedElement.properties.text || ""}
             onChange={(e) => handlePropertyChange("text", e.target.value)}
-            placeholder="Enter button text..."
+            placeholder="Enter button text (leave empty for no text)..."
           />
         </div>
         <div>
@@ -315,6 +315,9 @@ export function PropertiesPanel() {
               <SelectItem value="danger">Danger</SelectItem>
               <SelectItem value="warning">Warning</SelectItem>
               <SelectItem value="info">Info</SelectItem>
+              <SelectItem value="gradient">Gradient</SelectItem>
+              <SelectItem value="glass">Glass</SelectItem>
+              <SelectItem value="neon">Neon</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -325,9 +328,26 @@ export function PropertiesPanel() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="xs">Extra Small</SelectItem>
               <SelectItem value="small">Small</SelectItem>
               <SelectItem value="default">Default</SelectItem>
               <SelectItem value="large">Large</SelectItem>
+              <SelectItem value="xl">Extra Large</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Border Radius</Label>
+          <Select value={selectedElement.properties.borderRadius || "default"} onValueChange={(value) => handlePropertyChange("borderRadius", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="sm">Small</SelectItem>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="lg">Large</SelectItem>
+              <SelectItem value="full">Full</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -339,12 +359,33 @@ export function PropertiesPanel() {
             placeholder="https://example.com"
           />
         </div>
+        <div>
+          <Label>Target</Label>
+          <Select value={selectedElement.properties.target || "_self"} onValueChange={(value) => handlePropertyChange("target", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_self">Same Window</SelectItem>
+              <SelectItem value="_blank">New Window</SelectItem>
+              <SelectItem value="_parent">Parent Frame</SelectItem>
+              <SelectItem value="_top">Top Frame</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex items-center space-x-2">
           <Switch
             checked={selectedElement.properties.disabled || false}
             onCheckedChange={(checked) => handlePropertyChange("disabled", checked)}
           />
           <Label>Disabled</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={selectedElement.properties.loading || false}
+            onCheckedChange={(checked) => handlePropertyChange("loading", checked)}
+          />
+          <Label>Loading State</Label>
         </div>
       </div>
     </>
@@ -874,6 +915,52 @@ export function PropertiesPanel() {
           />
         </div>
         <div>
+          <Label>Font Weight</Label>
+          <Select value={selectedElement.properties.fontWeight || "normal"} onValueChange={(value) => handlePropertyChange("fontWeight", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="bold">Bold</SelectItem>
+              <SelectItem value="100">Thin</SelectItem>
+              <SelectItem value="300">Light</SelectItem>
+              <SelectItem value="500">Medium</SelectItem>
+              <SelectItem value="700">Semi Bold</SelectItem>
+              <SelectItem value="900">Black</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Text Alignment</Label>
+          <Select value={selectedElement.properties.textAlign || "left"} onValueChange={(value) => handlePropertyChange("textAlign", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="left">Left</SelectItem>
+              <SelectItem value="center">Center</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
+              <SelectItem value="justify">Justify</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Line Height</Label>
+          <Select value={selectedElement.properties.lineHeight || "1.5"} onValueChange={(value) => handlePropertyChange("lineHeight", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1.2">Tight (1.2)</SelectItem>
+              <SelectItem value="1.4">Normal (1.4)</SelectItem>
+              <SelectItem value="1.5">Relaxed (1.5)</SelectItem>
+              <SelectItem value="1.6">Loose (1.6)</SelectItem>
+              <SelectItem value="1.8">Very Loose (1.8)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
           <Label>Padding</Label>
           <Input
             type="number"
@@ -920,6 +1007,36 @@ export function PropertiesPanel() {
               <SelectItem value="md">Medium</SelectItem>
               <SelectItem value="lg">Large</SelectItem>
               <SelectItem value="xl">Extra Large</SelectItem>
+              <SelectItem value="inner">Inner</SelectItem>
+              <SelectItem value="glow">Glow</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Opacity</Label>
+          <Input
+            type="number"
+            min="0"
+            max="100"
+            value={selectedElement.properties.opacity || "100"}
+            onChange={(e) => handlePropertyChange("opacity", parseInt(e.target.value))}
+            placeholder="Opacity (0-100)"
+          />
+        </div>
+        <div>
+          <Label>Transform</Label>
+          <Select value={selectedElement.properties.transform || "none"} onValueChange={(value) => handlePropertyChange("transform", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="scale-95">Scale Down</SelectItem>
+              <SelectItem value="scale-105">Scale Up</SelectItem>
+              <SelectItem value="rotate-1">Rotate Right</SelectItem>
+              <SelectItem value="-rotate-1">Rotate Left</SelectItem>
+              <SelectItem value="skew-1">Skew Right</SelectItem>
+              <SelectItem value="-skew-1">Skew Left</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -955,7 +1072,6 @@ export function PropertiesPanel() {
       case "navigation":
         return renderNavigationProperties()
       case "contact":
-      case "newsletter":
         return renderFormProperties()
       case "pricing":
         return renderPricingProperties()
@@ -971,8 +1087,8 @@ export function PropertiesPanel() {
   }
 
   return (
-    <div className="w-80 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700">
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+    <div className="h-full bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
         <h3 className="font-semibold text-slate-900 dark:text-slate-100">
           {selectedElement.type.charAt(0).toUpperCase() + selectedElement.type.slice(1)} Properties
         </h3>
@@ -1003,7 +1119,8 @@ export function PropertiesPanel() {
         </div>
       </div>
 
-      <Tabs defaultValue="content" className="p-4">
+      <div className="flex-1 overflow-y-auto">
+        <Tabs defaultValue="content" className="p-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="content" className="flex items-center space-x-1">
             <Type className="w-3 h-3" />
@@ -1110,6 +1227,7 @@ export function PropertiesPanel() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   )
 }

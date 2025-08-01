@@ -221,7 +221,7 @@ export default function BuilderPage({ params }: { params: { projectId: string } 
           className="bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex-shrink-0"
           style={{ width: rightPanelWidth }}
         >
-          <PropertiesPanel selectedElement={selectedElement} />
+          <PropertiesPanel />
         </div>
       </div>
 

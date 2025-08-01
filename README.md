@@ -114,10 +114,9 @@ For production, use a hosted PostgreSQL service like:
 
 ## Environment Variables
 
-
-DATABASE_URL="postgresql://..."
-NEXTAUTH_URL="https://your-domain.com"
-NEXTAUTH_SECRET="your-secret-key"
-GOOGLE_CLIENT_ID="your-google-client-id" # Optional
-GOOGLE_CLIENT_SECRET="your-google-client-secret" # Optional
+DATABASE_URL=""
+NEXTAUTH_URL=""
+NEXTAUTH_SECRET=""
+GOOGLE_CLIENT_ID="" # Optional
+GOOGLE_CLIENT_SECRET="" # Optional
 

@@ -106,22 +106,36 @@ export function Canvas({ deviceMode }: CanvasProps) {
           shadow: "none",
           zIndex: 1,
           // Component-specific defaults
-          text: componentData.id === "text" ? "Your compelling text here" : 
+          text: componentData.id === "text" ? "" : 
                 componentData.id === "button" ? "Click me" :
-                componentData.id === "heading" ? "Your Heading" :
-                componentData.id === "paragraph" ? "Your paragraph text goes here. This is a longer text block that can contain multiple sentences and provide more detailed information to your readers." :
-                componentData.id === "link" ? "Click here" : "",
+                componentData.id === "heading" ? "" :
+                componentData.id === "paragraph" ? "" :
+                componentData.id === "link" ? "" : "",
           buttonStyle: componentData.id === "button" ? "primary" : "default",
           buttonSize: componentData.id === "button" ? "default" : "default",
+          borderRadius: componentData.id === "button" ? "default" : "default",
+          disabled: componentData.id === "button" ? false : false,
+          loading: componentData.id === "button" ? false : false,
+          href: componentData.id === "link" ? "#" : "#",
+          target: componentData.id === "link" ? "_self" : "_self",
+          linkStyle: componentData.id === "link" ? "default" : "default",
           dividerStyle: componentData.id === "divider" ? "solid" : "default",
           sectionStyle: componentData.id === "section" ? "default" : "default",
           cardStyle: componentData.id === "card" ? "default" : "default",
           heroStyle: componentData.id === "hero" ? "default" : "default",
           imageStyle: componentData.id === "image" ? "default" : "default",
           objectFit: componentData.id === "image" ? "cover" : "cover",
+          lazy: componentData.id === "image" ? false : false,
           inputStyle: componentData.id === "input" ? "default" : "default",
           textareaStyle: componentData.id === "textarea" ? "default" : "default",
           checkboxStyle: componentData.id === "checkbox" ? "default" : "default",
+          // New styling properties
+          fontFamily: "Inter",
+          fontWeight: "normal",
+          textAlign: "left",
+          lineHeight: "1.5",
+          opacity: 100,
+          transform: "none",
         },
       }
 
@@ -211,17 +225,18 @@ export function Canvas({ deviceMode }: CanvasProps) {
           return "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
         case "xl":
           return "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+        case "inner":
+          return "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)"
+        case "glow":
+          return "0 0 20px rgba(59, 130, 246, 0.5)"
         default:
           return "none"
       }
     }
 
     const style = {
-      position: "absolute" as const,
-      left: element.properties.x,
-      top: element.properties.y,
-      width: element.properties.width,
-      height: element.properties.height,
+      width: "100%",
+      height: "100%",
       backgroundColor: element.properties.backgroundColor,
       color: element.properties.color,
       fontSize: element.properties.fontSize,
@@ -231,7 +246,8 @@ export function Canvas({ deviceMode }: CanvasProps) {
       borderColor: element.properties.borderColor,
       borderStyle: element.properties.borderWidth > 0 ? "solid" : "none",
       boxShadow: getShadowStyle(element.properties.shadow),
-      zIndex: element.properties.zIndex,
+      opacity: element.properties.opacity ? element.properties.opacity / 100 : 1,
+      transform: element.properties.transform || "none",
       display: element.properties.display,
       flexDirection: element.properties.flexDirection,
       justifyContent: element.properties.justifyContent,
@@ -251,7 +267,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
                 lineHeight: element.properties.lineHeight || '1.5'
               }}
             >
-              {element.properties.text || "Your compelling text here"}
+              {element.properties.text || ""}
             </div>
           </div>
         )
@@ -270,7 +286,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
                 lineHeight: element.properties.lineHeight || '1.2'
               }}
             >
-              {element.properties.text || "Your Heading"}
+              {element.properties.text || ""}
             </HeadingTag>
           </div>
         )
@@ -287,7 +303,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
                 lineHeight: element.properties.lineHeight || '1.6'
               }}
             >
-              {element.properties.text || "Your paragraph text goes here. This is a longer text block that can contain multiple sentences and provide more detailed information to your readers."}
+              {element.properties.text || ""}
             </p>
           </div>
         )
@@ -300,7 +316,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
               className="text-blue-600 hover:text-blue-800 underline transition-colors"
               target={element.properties.target || "_self"}
             >
-              {element.properties.text || "Click here"}
+              {element.properties.text || ""}
             </a>
           </div>
         )
@@ -316,21 +332,33 @@ export function Canvas({ deviceMode }: CanvasProps) {
           success: "bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl",
           danger: "bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl",
           warning: "bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl",
-          info: "bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg hover:shadow-xl"
+          info: "bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg hover:shadow-xl",
+          gradient: "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl",
+          glass: "bg-white/20 backdrop-blur-sm border border-white/30 text-white shadow-lg hover:shadow-xl",
+          neon: "bg-transparent border-2 border-cyan-400 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)] hover:shadow-[0_0_20px_rgba(34,211,238,0.8)]"
         }
         const sizeClasses = {
+          xs: "px-2 py-1 text-xs",
           small: "px-3 py-1 text-sm",
           default: "px-6 py-3",
-          large: "px-8 py-4 text-lg"
+          large: "px-8 py-4 text-lg",
+          xl: "px-10 py-5 text-xl"
+        }
+        const radiusClasses = {
+          none: "rounded-none",
+          sm: "rounded-sm",
+          default: "rounded-lg",
+          lg: "rounded-xl",
+          full: "rounded-full"
         }
         
         return (
           <button 
             style={style}
-            className={`rounded-lg font-medium transition-all duration-200 transform hover:scale-105 ${buttonVariants[buttonStyle]} ${sizeClasses[buttonSize]} ${element.properties.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`font-medium transition-all duration-200 transform hover:scale-105 ${buttonVariants[buttonStyle]} ${sizeClasses[buttonSize]} ${radiusClasses[element.properties.borderRadius || "default"]} ${element.properties.disabled ? 'opacity-50 cursor-not-allowed' : ''} ${element.properties.loading ? 'animate-pulse' : ''}`}
             disabled={element.properties.disabled}
           >
-            {element.properties.text || "Click me"}
+            {element.properties.text || ""}
           </button>
         )
 
