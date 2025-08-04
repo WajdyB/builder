@@ -5,7 +5,7 @@ import { useState, useRef, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { useBuilderStore } from "@/lib/store/builder-store"
 import { Button } from "@/components/ui/button"
-import { Plus, Minus } from "lucide-react"
+import { Plus, Minus, Play, ImageIcon, ChevronDown } from "lucide-react"
 
 interface CanvasProps {
   deviceMode: "desktop" | "tablet" | "mobile"
@@ -113,7 +113,6 @@ export function Canvas({ deviceMode }: CanvasProps) {
                 componentData.id === "link" ? "" : "",
           buttonStyle: componentData.id === "button" ? "primary" : "default",
           buttonSize: componentData.id === "button" ? "default" : "default",
-          borderRadius: componentData.id === "button" ? "default" : "default",
           disabled: componentData.id === "button" ? false : false,
           loading: componentData.id === "button" ? false : false,
           href: componentData.id === "link" ? "#" : "#",
@@ -355,7 +354,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         return (
           <button 
             style={style}
-            className={`font-medium transition-all duration-200 transform hover:scale-105 ${buttonVariants[buttonStyle]} ${sizeClasses[buttonSize]} ${radiusClasses[element.properties.borderRadius || "default"]} ${element.properties.disabled ? 'opacity-50 cursor-not-allowed' : ''} ${element.properties.loading ? 'animate-pulse' : ''}`}
+            className={`font-medium transition-all duration-200 transform hover:scale-105 ${buttonVariants[String(buttonStyle) as keyof typeof buttonVariants]} ${sizeClasses[String(buttonSize) as keyof typeof sizeClasses]} ${radiusClasses[String(element.properties.borderRadius || "default") as keyof typeof radiusClasses]} ${element.properties.disabled ? 'opacity-50 cursor-not-allowed' : ''} ${element.properties.loading ? 'animate-pulse' : ''}`}
             disabled={element.properties.disabled}
           >
             {element.properties.text || ""}
@@ -379,7 +378,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
             }}
             src={element.properties.src || "/placeholder.svg"}
             alt={element.properties.alt || "Image"}
-            className={`transition-transform duration-300 hover:scale-105 ${imageClasses[imageStyle]}`}
+            className={`transition-transform duration-300 hover:scale-105 ${imageClasses[String(imageStyle) as keyof typeof imageClasses]}`}
             loading={element.properties.lazy ? "lazy" : "eager"}
           />
         )
@@ -395,7 +394,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         }
         
         return (
-          <div style={style} className={`w-full ${dividerVariants[dividerStyle]}`}></div>
+          <div style={style} className={`w-full ${dividerVariants[String(dividerStyle) as keyof typeof dividerVariants]}`}></div>
         )
 
       case "section":
@@ -409,7 +408,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         }
         
         return (
-          <section style={style} className={`flex items-center justify-center p-8 ${sectionVariants[sectionStyle]}`}>
+          <section style={style} className={`flex items-center justify-center p-8 ${sectionVariants[String(sectionStyle) as keyof typeof sectionVariants]}`}>
             <div className="text-center">
               <div className="text-2xl font-bold mb-4">Section Container</div>
               <div className="text-sm opacity-75">Perfect for organizing your content</div>
@@ -427,7 +426,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         }
         
         return (
-          <div style={style} className={`p-6 rounded-lg ${cardVariants[cardStyle]}`}>
+          <div style={style} className={`p-6 rounded-lg ${cardVariants[String(cardStyle) as keyof typeof cardVariants]}`}>
             <div className="text-center">
               <div className="text-xl font-bold mb-2">Card Title</div>
               <div className="text-sm text-gray-600">This is a beautiful card component with customizable styling.</div>
@@ -452,7 +451,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         } : {}
         
         return (
-          <div style={{...style, ...heroBackgroundStyle}} className={`flex items-center justify-center ${heroVariants[heroStyle]}`}>
+          <div style={{...style, ...heroBackgroundStyle}} className={`flex items-center justify-center ${heroVariants[String(heroStyle) as keyof typeof heroVariants]}`}>
             <div className="text-center">
               <h1 className="text-4xl font-bold mb-4">{element.properties.heading || "Hero Section"}</h1>
               <p className="text-xl mb-6">{element.properties.subheading || "Create stunning hero sections for your website"}</p>
@@ -479,7 +478,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
           ['Home', 'About', 'Services', 'Contact']
         
         return (
-          <nav style={style} className={`${navVariants[navStyle]} ${element.properties.sticky ? 'sticky top-0 z-50' : ''}`}>
+          <nav style={style} className={`${navVariants[String(navStyle) as keyof typeof navVariants]} ${element.properties.sticky ? 'sticky top-0 z-50' : ''}`}>
             <div className="flex items-center justify-between px-6 py-4">
               <div className="text-xl font-bold text-gray-800">{element.properties.logoText || "Logo"}</div>
               <nav className="flex space-x-6">
@@ -518,7 +517,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         
         return (
           <div style={style} className="p-6">
-            <div className={pricingVariants[pricingStyle]}>
+            <div className={pricingVariants[String(pricingStyle) as keyof typeof pricingVariants]}>
               <div className="text-2xl font-bold mb-2">{element.properties.price || "$29"}</div>
               <div className="text-lg font-semibold mb-4">{element.properties.planName || "Pro Plan"}</div>
               <ul className="text-sm text-gray-600 space-y-2 mb-6">
@@ -544,7 +543,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         
         return (
           <div style={style} className="p-6">
-            <div className={testimonialVariants[testimonialStyle]}>
+            <div className={testimonialVariants[String(testimonialStyle) as keyof typeof testimonialVariants]}>
               <div className="text-gray-600 mb-4">"{element.properties.quote || "This is an amazing product that has transformed our business completely!"}"</div>
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
@@ -572,7 +571,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         
         return (
           <div style={style} className="p-6">
-            <div className={contactVariants[contactStyle]}>
+            <div className={contactVariants[String(contactStyle) as keyof typeof contactVariants]}>
               <h3 className="text-lg font-semibold mb-4">{element.properties.formTitle || "Contact Us"}</h3>
               <div className="space-y-4">
                 {formFields.map((field: string, index: number) => (
@@ -602,7 +601,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         
         return (
           <div style={style} className="p-6">
-            <div className={newsletterVariants[newsletterStyle]}>
+            <div className={newsletterVariants[String(newsletterStyle) as keyof typeof newsletterVariants]}>
               <h3 className="text-xl font-semibold mb-2">{element.properties.newsletterTitle || "Stay Updated"}</h3>
               <p className="mb-4">{element.properties.newsletterDescription || "Subscribe to our newsletter for the latest updates"}</p>
               <div className="flex space-x-2">
@@ -645,18 +644,18 @@ export function Canvas({ deviceMode }: CanvasProps) {
           <div style={style} className="flex items-center justify-center">
             <div className="flex space-x-4">
               {socialPlatforms.length > 0 ? socialPlatforms.map((platform, index) => (
-                <a key={index} href="#" className={`${socialVariants[socialStyle]} ${socialSizeClasses[socialSize]} ${platform.bg} rounded-full flex items-center justify-center text-white hover:opacity-80 transition-opacity`}>
+                <a key={index} href="#" className={`${socialVariants[String(socialStyle) as keyof typeof socialVariants]} ${socialSizeClasses[String(socialSize) as keyof typeof socialSizeClasses]} ${platform.bg} rounded-full flex items-center justify-center text-white hover:opacity-80 transition-opacity`}>
                   <span className="text-sm font-bold">{platform.text}</span>
                 </a>
               )) : (
                 <>
-                  <a href="#" className={`${socialVariants[socialStyle]} ${socialSizeClasses[socialSize]} bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700`}>
+                  <a href="#" className={`${socialVariants[String(socialStyle) as keyof typeof socialVariants]} ${socialSizeClasses[String(socialSize) as keyof typeof socialSizeClasses]} bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700`}>
                     <span className="text-sm font-bold">f</span>
                   </a>
-                  <a href="#" className={`${socialVariants[socialStyle]} ${socialSizeClasses[socialSize]} bg-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-500`}>
+                  <a href="#" className={`${socialVariants[String(socialStyle) as keyof typeof socialVariants]} ${socialSizeClasses[String(socialSize) as keyof typeof socialSizeClasses]} bg-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-500`}>
                     <span className="text-sm font-bold">t</span>
                   </a>
-                  <a href="#" className={`${socialVariants[socialStyle]} ${socialSizeClasses[socialSize]} bg-pink-600 rounded-full flex items-center justify-center text-white hover:bg-pink-700`}>
+                  <a href="#" className={`${socialVariants[String(socialStyle) as keyof typeof socialVariants]} ${socialSizeClasses[String(socialSize) as keyof typeof socialSizeClasses]} bg-pink-600 rounded-full flex items-center justify-center text-white hover:bg-pink-700`}>
                     <span className="text-sm font-bold">in</span>
                   </a>
                 </>

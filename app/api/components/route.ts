@@ -35,9 +35,12 @@ export async function POST(request: NextRequest) {
       data: {
         type,
         properties,
-        position,
         pageId,
         parentId,
+        x: properties?.x ?? 0,
+        y: properties?.y ?? 0,
+        width: properties?.width ?? 100,
+        height: properties?.height ?? 100,
       },
     })
 
