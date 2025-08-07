@@ -82,9 +82,10 @@ function generateHTML(project: any): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${project.title}</title>
     <style>
-        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
-        .container { position: relative; min-height: 100vh; background: white; }
-        .page { position: relative; min-height: 100vh; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; }
+        .container { max-width: 100%; margin: 0 auto; }
+        .page { width: 100%; min-height: 100vh; position: relative; }
         ${generateInlineCSS(project)}
     </style>
 </head>
@@ -105,9 +106,10 @@ function generateHTML(project: any): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${project.title}</title>
     <style>
-        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
-        .container { position: relative; min-height: 100vh; background: white; }
-        .page { position: relative; min-height: 100vh; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; }
+        .container { max-width: 100%; margin: 0 auto; }
+        .page { width: 100%; min-height: 100vh; position: relative; }
         ${generateInlineCSS(project)}
     </style>
 </head>
@@ -131,14 +133,13 @@ function generatePageHTML(page: any): string {
 function generateComponentHTML(component: any): string {
   const { type, properties } = component
   
-  // Extract position properties from the properties object
-  const x = properties.x || 0
-  const y = properties.y || 0
+  // Use responsive layout instead of absolute positioning
   const width = properties.width || "auto"
   const height = properties.height || "auto"
-  const zIndex = properties.zIndex || 0
+  const margin = properties.margin || "0"
+  const padding = properties.padding || "0"
   
-  const style = `position: absolute; left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px; z-index: ${zIndex};`
+  const style = `width: ${width}px; height: ${height}px; margin: ${margin}px; padding: ${padding}px;`
 
   switch (type) {
     case "text":
@@ -421,11 +422,24 @@ function getPropertiesStyle(properties: any): string {
   if (properties.justifyContent) styles.push(`justify-content: ${properties.justifyContent}`)
   if (properties.alignItems) styles.push(`align-items: ${properties.alignItems}`)
 
+  // Responsive width
+  if (properties.width && properties.width > 0) {
+    if (properties.width >= 1200) {
+      styles.push(`width: 100%; max-width: 1200px; margin: 0 auto;`)
+    } else {
+      styles.push(`width: ${properties.width}px;`)
+    }
+  }
+
   return styles.join("; ")
 }
 
 function generateInlineCSS(project: any): string {
   let css = `
+/* Responsive Layout */
+.container { max-width: 100%; margin: 0 auto; padding: 0 20px; }
+.page { width: 100%; min-height: 100vh; position: relative; }
+
 /* Base Component Styles */
 .text-component { display: flex; align-items: center; justify-content: center; padding: 16px; }
 .button-component { cursor: pointer; border: none; border-radius: 8px; font-weight: 500; transition: all 0.2s; }
@@ -527,6 +541,21 @@ function generateInlineCSS(project: any): string {
 .image-component:hover { transform: scale(1.05); }
 .hero-button { background: white; color: #2563eb; padding: 12px 24px; border-radius: 8px; font-weight: 500; border: none; cursor: pointer; transition: background-color 0.2s; }
 .hero-button:hover { background: #f3f4f6; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container { padding: 0 16px; }
+  .nav-links { gap: 16px; }
+  .hero-component h1 { font-size: 2rem; }
+  .hero-component p { font-size: 1rem; }
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0 12px; }
+  .nav-links { flex-direction: column; gap: 8px; }
+  .hero-component h1 { font-size: 1.5rem; }
+  .hero-component p { font-size: 0.875rem; }
+}
 `
 
   // Generate specific CSS for each component
@@ -546,22 +575,10 @@ function generateInlineCSS(project: any): string {
 function generateCSS(project: any): string {
   let css = `/* Generated CSS for ${project.title} */
 
-body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-}
-
-.container {
-    position: relative;
-    min-height: 100vh;
-    background: white;
-}
-
-.page {
-    position: relative;
-    min-height: 100vh;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; }
+.container { max-width: 100%; margin: 0 auto; padding: 0 20px; }
+.page { width: 100%; min-height: 100vh; position: relative; }
 
 /* Component Base Styles */
 .text-component { display: flex; align-items: center; justify-content: center; }
@@ -578,6 +595,15 @@ body {
 .button-component:hover { opacity: 0.9; }
 .input-component:focus { border-color: #007bff; }
 .textarea-component:focus { border-color: #007bff; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container { padding: 0 16px; }
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0 12px; }
+}
 
 /* Component Specific Styles */
 `

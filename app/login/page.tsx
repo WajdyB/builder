@@ -42,16 +42,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true)
-    try {
-      await signIn("google", { callbackUrl: "/dashboard" })
-    } catch (error) {
-      toast.error("Failed to sign in with Google")
-      setIsLoading(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-gray-200 shadow-xl">
@@ -66,25 +56,6 @@ export default function LoginPage() {
           <CardDescription className="text-gray-500">Sign in to your account to continue building</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button
-            onClick={handleGoogleSignIn}
-            variant="outline"
-            className="w-full bg-white text-blue-600 border-blue-100 hover:bg-blue-50"
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            Continue with Google
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-400">Or continue with</span>
-            </div>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-700">

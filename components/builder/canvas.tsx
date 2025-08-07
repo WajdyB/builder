@@ -18,24 +18,37 @@ export function Canvas({ deviceMode }: CanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const { elements, selectedElement, setSelectedElement, addElement, updateElement } = useBuilderStore()
 
-  const getCanvasWidth = () => {
-    switch (deviceMode) {
-      case "mobile":
-        return "375px"
-      case "tablet":
-        return "768px"
-      default:
-        return "100%"
+  // Canvas width is now handled in getCanvasDimensions
+
+  // Dynamically calculate canvas dimensions based on content and minimum sizes
+  const getCanvasDimensions = () => {
+    if (elements.length === 0) {
+      return {
+        width: deviceMode === "mobile" ? 375 : deviceMode === "tablet" ? 768 : 1200,
+        height: 600
+      }
+    }
+
+    // Find the boundaries of all elements
+    const minX = Math.min(...elements.map(el => el.properties.x || 0))
+    const maxX = Math.max(...elements.map(el => (el.properties.x || 0) + (el.properties.width || 0)))
+    const minY = Math.min(...elements.map(el => el.properties.y || 0))
+    const maxY = Math.max(...elements.map(el => (el.properties.y || 0) + (el.properties.height || 0)))
+
+    // Calculate required dimensions with padding
+    const requiredWidth = Math.max(
+      deviceMode === "mobile" ? 375 : deviceMode === "tablet" ? 768 : 1200,
+      maxX + 100 // Add 100px padding
+    )
+    const requiredHeight = Math.max(600, maxY + 100) // Add 100px padding
+
+    return {
+      width: requiredWidth,
+      height: requiredHeight
     }
   }
 
-  const getCanvasHeight = () => {
-    // Calculate canvas height based on content
-    if (elements.length === 0) return "600px"
-    
-    const maxY = Math.max(...elements.map(el => el.properties.y + el.properties.height))
-    return Math.max(600, maxY + 100) + "px"
-  }
+  const canvasDimensions = getCanvasDimensions()
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -48,43 +61,45 @@ export function Canvas({ deviceMode }: CanvasProps) {
       const rect = canvasRef.current?.getBoundingClientRect()
       if (!rect) return
 
-      // Calculate position relative to canvas, accounting for zoom
+      // Calculate position relative to canvas, accounting for zoom and scroll
       const canvasLeft = rect.left
       const canvasTop = rect.top
       const x = (e.clientX - canvasLeft) / (zoom / 100)
       const y = (e.clientY - canvasTop) / (zoom / 100)
       
-      // Ensure minimum position values
-      const finalX = Math.max(0, x)
-      const finalY = Math.max(0, y)
+      // Ensure minimum position values and keep within canvas boundaries
+      const canvasWidth = canvasDimensions.width
+      const canvasHeight = canvasDimensions.height
+      const finalX = Math.max(0, Math.min(x, canvasWidth - 50)) // Keep 50px margin
+      const finalY = Math.max(0, Math.min(y, canvasHeight - 50)) // Keep 50px margin
 
       // Set default dimensions based on component type
       let width = 200
       let height = 100
       
       if (componentData.id === "section") {
-        width = rect.width - 40 // Account for padding
+        width = Math.min(canvasWidth - 40, 800) // Account for padding and max width
         height = 200
       } else if (componentData.id === "image") {
-        width = 300
+        width = Math.min(300, canvasWidth - 40)
         height = 200
       } else if (componentData.id === "button") {
         width = 120
         height = 40
       } else if (componentData.id === "text") {
-        width = 200
+        width = Math.min(200, canvasWidth - 40)
         height = 60
       } else if (componentData.id === "hero") {
-        width = rect.width - 40
+        width = Math.min(canvasWidth - 40, 1200) // Full width with padding
         height = 400
       } else if (componentData.id === "navigation") {
-        width = rect.width - 40
+        width = Math.min(canvasWidth - 40, 1200) // Full width with padding
         height = 80
       } else if (componentData.id === "footer") {
-        width = rect.width - 40
+        width = Math.min(canvasWidth - 40, 1200) // Full width with padding
         height = 120
       } else if (componentData.id === "card") {
-        width = 300
+        width = Math.min(300, canvasWidth - 40)
         height = 200
       }
 
@@ -174,24 +189,28 @@ export function Canvas({ deviceMode }: CanvasProps) {
       let newX = startLeft
       let newY = startTop
 
-      // Handle different resize directions
+      // Get canvas boundaries
+      const canvasWidth = canvasDimensions.width
+      const canvasHeight = canvasDimensions.height
+
+      // Handle different resize directions with boundary constraints
       if (handle.includes('e')) {
-        newWidth = Math.max(50, startWidth + deltaX)
+        newWidth = Math.max(50, Math.min(startWidth + deltaX, canvasWidth - startLeft))
       }
       if (handle.includes('w')) {
         const maxDelta = startWidth - 50
         const actualDelta = Math.min(deltaX, maxDelta)
         newWidth = Math.max(50, startWidth - actualDelta)
-        newX = startLeft + actualDelta
+        newX = Math.max(0, startLeft + actualDelta)
       }
       if (handle.includes('s')) {
-        newHeight = Math.max(50, startHeight + deltaY)
+        newHeight = Math.max(50, Math.min(startHeight + deltaY, canvasHeight - startTop))
       }
       if (handle.includes('n')) {
         const maxDelta = startHeight - 50
         const actualDelta = Math.min(deltaY, maxDelta)
         newHeight = Math.max(50, startHeight - actualDelta)
-        newY = startTop + actualDelta
+        newY = Math.max(0, startTop + actualDelta)
       }
 
       updateElement(element.id, {
@@ -211,7 +230,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
 
     document.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("mouseup", handleMouseUp)
-  }, [updateElement])
+  }, [updateElement, canvasDimensions])
 
   const renderComponent = (element: any) => {
     const getShadowStyle = (shadow: string) => {
@@ -502,6 +521,418 @@ export function Canvas({ deviceMode }: CanvasProps) {
           </footer>
         )
 
+      // Form Components
+      case "input":
+        const inputStyle = element.properties.inputStyle || "default"
+        const inputVariants = {
+          default: "border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+          modern: "border-b-2 border-gray-300 bg-transparent px-3 py-2 focus:outline-none focus:border-blue-500",
+          rounded: "border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500",
+          filled: "border-none bg-gray-100 px-3 py-2 rounded-md focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <input
+              type={element.properties.inputType || "text"}
+              placeholder={element.properties.placeholder || "Enter your text..."}
+              className={`w-full ${inputVariants[String(inputStyle) as keyof typeof inputVariants]}`}
+              style={{
+                backgroundColor: element.properties.backgroundColor || 'transparent',
+                color: element.properties.color || '#000000',
+                fontSize: element.properties.fontSize || 16,
+              }}
+            />
+          </div>
+        )
+
+      case "textarea":
+        const textareaStyle = element.properties.textareaStyle || "default"
+        const textareaVariants = {
+          default: "border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none",
+          modern: "border-b-2 border-gray-300 bg-transparent px-3 py-2 focus:outline-none focus:border-blue-500 resize-none",
+          filled: "border-none bg-gray-100 px-3 py-2 rounded-md focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 resize-none"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <textarea
+              placeholder={element.properties.placeholder || "Write your message here..."}
+              rows={element.properties.rows || 4}
+              className={`w-full ${textareaVariants[String(textareaStyle) as keyof typeof textareaVariants]}`}
+              style={{
+                backgroundColor: element.properties.backgroundColor || 'transparent',
+                color: element.properties.color || '#000000',
+                fontSize: element.properties.fontSize || 16,
+              }}
+            />
+          </div>
+        )
+
+      case "checkbox":
+        const checkboxStyle = element.properties.checkboxStyle || "default"
+        const checkboxVariants = {
+          default: "flex items-center space-x-3 cursor-pointer",
+          modern: "flex items-center space-x-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors",
+          card: "flex items-center space-x-3 cursor-pointer p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <label className={checkboxVariants[String(checkboxStyle) as keyof typeof checkboxVariants]}>
+              <input
+                type="checkbox"
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                style={{
+                  accentColor: element.properties.accentColor || '#3b82f6'
+                }}
+              />
+              <span className="font-medium" style={{ color: element.properties.color || '#000000' }}>
+                {element.properties.label || "Check this option"}
+              </span>
+            </label>
+          </div>
+        )
+
+      case "radio":
+        const radioStyle = element.properties.radioStyle || "default"
+        const radioVariants = {
+          default: "flex items-center space-x-3 cursor-pointer",
+          modern: "flex items-center space-x-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors",
+          card: "flex items-center space-x-3 cursor-pointer p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <label className={radioVariants[String(radioStyle) as keyof typeof radioVariants]}>
+              <input
+                type="radio"
+                name={element.properties.name || "radio-group"}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                style={{
+                  accentColor: element.properties.accentColor || '#3b82f6'
+                }}
+              />
+              <span className="font-medium" style={{ color: element.properties.color || '#000000' }}>
+                {element.properties.label || "Radio option"}
+              </span>
+            </label>
+          </div>
+        )
+
+      case "select":
+        const selectStyle = element.properties.selectStyle || "default"
+        const selectVariants = {
+          default: "border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+          modern: "border-b-2 border-gray-300 bg-transparent px-3 py-2 focus:outline-none focus:border-blue-500",
+          rounded: "border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <select className={`w-full ${selectVariants[String(selectStyle) as keyof typeof selectVariants]}`} style={{
+              backgroundColor: element.properties.backgroundColor || 'transparent',
+              color: element.properties.color || '#000000',
+              fontSize: element.properties.fontSize || 16,
+            }}>
+              <option value="">{element.properties.placeholder || "Select an option"}</option>
+              <option value="option1">Option 1</option>
+              <option value="option2">Option 2</option>
+              <option value="option3">Option 3</option>
+            </select>
+          </div>
+        )
+
+      case "label":
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <label className="text-sm font-medium" style={{ color: element.properties.color || '#374151' }}>
+              {element.properties.text || "Label"}
+            </label>
+          </div>
+        )
+
+      case "form":
+        const formStyle = element.properties.formStyle || "default"
+        const formVariants = {
+          default: "bg-white border border-gray-200 rounded-lg p-6",
+          card: "bg-white shadow-lg rounded-lg p-6",
+          minimal: "bg-transparent border border-gray-200 rounded-lg p-6",
+          floating: "bg-white border border-gray-200 rounded-lg p-6 shadow-lg"
+        }
+        
+        const formFieldList = element.properties.formFields ? 
+          element.properties.formFields.split(',').map((field: string) => field.trim()) : 
+          ['Name', 'Email', 'Message']
+        
+        return (
+          <div style={style} className="p-4">
+            <div className={formVariants[String(formStyle) as keyof typeof formVariants]}>
+              <h3 className="text-lg font-semibold mb-4">{element.properties.formTitle || "Contact Form"}</h3>
+              <div className="space-y-4">
+                {formFieldList.map((field: string, index: number) => (
+                  <div key={index} className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">{field}</label>
+                    {field.toLowerCase() === 'message' ? (
+                      <textarea 
+                        placeholder={`Enter your ${field.toLowerCase()}`}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      />
+                    ) : (
+                      <input 
+                        type={field.toLowerCase() === 'email' ? 'email' : 'text'} 
+                        placeholder={`Enter your ${field.toLowerCase()}`}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    )}
+                  </div>
+                ))}
+                <button className="w-full bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors">
+                  {element.properties.submitText || "Submit"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+
+      // Interactive Components
+      case "tabs":
+        const tabsStyle = element.properties.tabsStyle || "default"
+        const tabsVariants = {
+          default: "border-b border-gray-200",
+          modern: "bg-gray-50 rounded-lg p-1",
+          card: "bg-white border border-gray-200 rounded-lg p-1"
+        }
+        
+        const tabItems = element.properties.tabItems ? 
+          element.properties.tabItems.split(',').map((item: string) => item.trim()) : 
+          ['Tab 1', 'Tab 2', 'Tab 3']
+        
+        return (
+          <div style={style} className="p-4">
+            <div className={tabsVariants[String(tabsStyle) as keyof typeof tabsVariants]}>
+              <div className="flex space-x-1">
+                {tabItems.map((item: string, index: number) => (
+                  <button
+                    key={index}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                      index === 0 ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+
+      case "accordion":
+        const accordionStyle = element.properties.accordionStyle || "default"
+        const accordionVariants = {
+          default: "border border-gray-200 rounded-lg",
+          modern: "bg-white shadow-sm rounded-lg",
+          card: "bg-white border border-gray-200 rounded-lg shadow-sm"
+        }
+        
+        const accordionItems = element.properties.accordionItems ? 
+          element.properties.accordionItems.split(',').map((item: string) => item.trim()) : 
+          ['Section 1', 'Section 2', 'Section 3']
+        
+        return (
+          <div style={style} className="p-4">
+            <div className={accordionVariants[String(accordionStyle) as keyof typeof accordionVariants]}>
+              {accordionItems.map((item: string, index: number) => (
+                <div key={index} className="border-b border-gray-200 last:border-b-0">
+                  <button className="w-full px-4 py-3 text-left font-medium hover:bg-gray-50 transition-colors flex items-center justify-between">
+                    <span>{item}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case "modal":
+        const modalStyle = element.properties.modalStyle || "default"
+        const modalVariants = {
+          default: "bg-white border border-gray-200 rounded-lg shadow-lg",
+          modern: "bg-white rounded-lg shadow-xl",
+          card: "bg-white border border-gray-200 rounded-lg shadow-lg"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <div className={`max-w-sm w-full ${modalVariants[String(modalStyle) as keyof typeof modalVariants]}`}>
+              <div className="p-6">
+                <div className="text-center">
+                  <div className="text-lg font-semibold mb-2">{element.properties.title || "Modal Dialog"}</div>
+                  <div className="text-sm text-gray-600 mb-4">{element.properties.content || "This is a modal dialog component"}</div>
+                  <button className="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition-colors">
+                    {element.properties.buttonText || "Close"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case "tooltip":
+        const tooltipStyle = element.properties.tooltipStyle || "default"
+        const tooltipVariants = {
+          default: "bg-gray-900 text-white text-sm rounded px-2 py-1",
+          modern: "bg-blue-600 text-white text-sm rounded-lg px-3 py-2 shadow-lg",
+          light: "bg-white text-gray-900 text-sm rounded border border-gray-200 px-3 py-2 shadow-lg"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <div className="relative group">
+              <button className="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition-colors">
+                {element.properties.triggerText || "Hover me"}
+              </button>
+              <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity ${tooltipVariants[String(tooltipStyle) as keyof typeof tooltipVariants]}`}>
+                {element.properties.tooltipText || "Tooltip content"}
+              </div>
+            </div>
+          </div>
+        )
+
+      case "dropdown":
+        const dropdownStyle = element.properties.dropdownStyle || "default"
+        const dropdownVariants = {
+          default: "bg-white border border-gray-200 rounded-lg shadow-lg",
+          modern: "bg-white rounded-lg shadow-xl",
+          minimal: "bg-white border border-gray-200 rounded-md shadow-sm"
+        }
+        
+        const dropdownItems = element.properties.dropdownItems ? 
+          element.properties.dropdownItems.split(',').map((item: string) => item.trim()) : 
+          ['Option 1', 'Option 2', 'Option 3']
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <div className="relative">
+              <button className="bg-white border border-gray-300 rounded-lg px-4 py-2 flex items-center space-x-2 hover:bg-gray-50 transition-colors">
+                <span>{element.properties.triggerText || "Dropdown"}</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              <div className={`absolute top-full left-0 mt-1 w-full ${dropdownVariants[String(dropdownStyle) as keyof typeof dropdownVariants]}`}>
+                {dropdownItems.map((item: string, index: number) => (
+                  <button
+                    key={index}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+
+      // Media Components
+      case "video":
+        const videoStyle = element.properties.videoStyle || "default"
+        const videoVariants = {
+          default: "bg-gray-200 rounded-lg",
+          modern: "bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg",
+          card: "bg-white border border-gray-200 rounded-lg shadow-sm"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <div className={`w-full h-full flex items-center justify-center ${videoVariants[String(videoStyle) as keyof typeof videoVariants]}`}>
+              <div className="text-center">
+                <Play className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                <div className="text-sm text-gray-600">{element.properties.videoTitle || "Video Player"}</div>
+                {element.properties.videoDescription && (
+                  <div className="text-xs text-gray-500 mt-1">{element.properties.videoDescription}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+
+      case "gallery":
+        const galleryStyle = element.properties.galleryStyle || "default"
+        const galleryVariants = {
+          default: "grid grid-cols-2 gap-4",
+          modern: "grid grid-cols-3 gap-3",
+          masonry: "columns-2 gap-4"
+        }
+        
+        return (
+          <div style={style} className="p-4">
+            <div className={galleryVariants[String(galleryStyle) as keyof typeof galleryVariants]}>
+              {[1, 2, 3, 4].map((index) => (
+                <div key={index} className="bg-gray-200 rounded-lg aspect-square flex items-center justify-center">
+                  <ImageIcon className="w-8 h-8 text-gray-400" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case "slider":
+        const sliderStyle = element.properties.sliderStyle || "default"
+        const sliderVariants = {
+          default: "bg-gray-200 rounded-lg",
+          modern: "bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg",
+          card: "bg-white border border-gray-200 rounded-lg shadow-sm"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <div className={`w-full h-full flex items-center justify-center ${sliderVariants[String(sliderStyle) as keyof typeof sliderVariants]}`}>
+              <div className="text-center">
+                <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                <div className="text-sm text-gray-600">{element.properties.sliderTitle || "Image Slider"}</div>
+                {element.properties.sliderDescription && (
+                  <div className="text-xs text-gray-500 mt-1">{element.properties.sliderDescription}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+
+      case "icon":
+        const iconStyle = element.properties.iconStyle || "default"
+        const iconVariants = {
+          default: "text-gray-600",
+          primary: "text-blue-600",
+          secondary: "text-gray-500",
+          accent: "text-purple-600",
+          success: "text-green-600",
+          warning: "text-yellow-600",
+          danger: "text-red-600"
+        }
+        
+        const iconSize = element.properties.iconSize || "default"
+        const iconSizeClasses = {
+          small: "w-4 h-4",
+          default: "w-6 h-6",
+          large: "w-8 h-8",
+          xl: "w-12 h-12"
+        }
+        
+        return (
+          <div style={style} className="flex items-center justify-center p-4">
+            <div className={`${iconVariants[String(iconStyle) as keyof typeof iconVariants]} ${iconSizeClasses[String(iconSize) as keyof typeof iconSizeClasses]}`}>
+              {element.properties.iconName ? (
+                <span className="text-2xl">{element.properties.iconName}</span>
+              ) : (
+                <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-500">Icon</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+
+      // Business Components
       case "pricing":
         const pricingStyle = element.properties.pricingStyle || "default"
         const pricingVariants = {
@@ -520,12 +951,15 @@ export function Canvas({ deviceMode }: CanvasProps) {
             <div className={pricingVariants[String(pricingStyle) as keyof typeof pricingVariants]}>
               <div className="text-2xl font-bold mb-2">{element.properties.price || "$29"}</div>
               <div className="text-lg font-semibold mb-4">{element.properties.planName || "Pro Plan"}</div>
-              <ul className="text-sm text-gray-600 space-y-2 mb-6">
+              <ul className="text-sm space-y-2 mb-6">
                 {features.map((feature: string, index: number) => (
-                  <li key={index}>✓ {feature}</li>
+                  <li key={index} className="flex items-center">
+                    <span className="text-green-500 mr-2">✓</span>
+                    {feature}
+                  </li>
                 ))}
               </ul>
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg">
+              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
                 {element.properties.buttonText || "Choose Plan"}
               </button>
             </div>
@@ -579,10 +1013,10 @@ export function Canvas({ deviceMode }: CanvasProps) {
                     key={index}
                     type={field.toLowerCase() === 'email' ? 'email' : 'text'} 
                     placeholder={field}
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ))}
-                <button className="bg-blue-600 text-white px-6 py-2 rounded">
+                <button className="bg-blue-600 text-white px-6 py-2 rounded font-medium hover:bg-blue-700 transition-colors">
                   {element.properties.submitText || "Send Message"}
                 </button>
               </div>
@@ -608,9 +1042,9 @@ export function Canvas({ deviceMode }: CanvasProps) {
                 <input 
                   type="email" 
                   placeholder={element.properties.placeholder || "Enter your email"} 
-                  className="flex-1 px-3 py-2 rounded text-gray-900" 
+                  className="flex-1 px-3 py-2 rounded text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" 
                 />
-                <button className="bg-white text-blue-600 px-4 py-2 rounded font-medium">
+                <button className="bg-white text-blue-600 px-4 py-2 rounded font-medium hover:bg-gray-100 transition-colors">
                   {element.properties.buttonText || "Subscribe"}
                 </button>
               </div>
@@ -641,7 +1075,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
         if (element.properties.youtube) socialPlatforms.push({ name: 'YouTube', bg: 'bg-red-600', text: 'yt' })
         
         return (
-          <div style={style} className="flex items-center justify-center">
+          <div style={style} className="flex items-center justify-center p-4">
             <div className="flex space-x-4">
               {socialPlatforms.length > 0 ? socialPlatforms.map((platform, index) => (
                 <a key={index} href="#" className={`${socialVariants[String(socialStyle) as keyof typeof socialVariants]} ${socialSizeClasses[String(socialSize) as keyof typeof socialSizeClasses]} ${platform.bg} rounded-full flex items-center justify-center text-white hover:opacity-80 transition-opacity`}>
@@ -664,7 +1098,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
           </div>
         )
 
-      // Add all the new components here with the same structure as canvas
+      // Layout Components
       case "container":
         return (
           <div style={style} className="border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center">
@@ -701,207 +1135,11 @@ export function Canvas({ deviceMode }: CanvasProps) {
             <div className="p-4">
               <div className="text-lg font-semibold mb-4">Sidebar</div>
               <nav className="space-y-2">
-                <a href="#" className="block text-gray-700 hover:text-blue-600">Home</a>
-                <a href="#" className="block text-gray-700 hover:text-blue-600">About</a>
-                <a href="#" className="block text-gray-700 hover:text-blue-600">Services</a>
-                <a href="#" className="block text-gray-700 hover:text-blue-600">Contact</a>
+                <a href="#" className="block text-gray-700 hover:text-blue-600 transition-colors">Home</a>
+                <a href="#" className="block text-gray-700 hover:text-blue-600 transition-colors">About</a>
+                <a href="#" className="block text-gray-700 hover:text-blue-600 transition-colors">Services</a>
+                <a href="#" className="block text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
               </nav>
-            </div>
-          </div>
-        )
-
-      case "radio":
-        return (
-          <div style={style} className="flex items-center justify-center">
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input 
-                type="radio" 
-                name={element.properties.name || "radio-group"}
-                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-              />
-              <span className="font-medium">{element.properties.label || "Radio option"}</span>
-            </label>
-          </div>
-        )
-
-      case "select":
-        return (
-          <div style={style} className="flex items-center justify-center p-4">
-            <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">{element.properties.placeholder || "Select an option"}</option>
-              <option value="option1">Option 1</option>
-              <option value="option2">Option 2</option>
-              <option value="option3">Option 3</option>
-            </select>
-          </div>
-        )
-
-      case "label":
-        return (
-          <div style={style} className="flex items-center justify-center">
-            <label className="text-sm font-medium text-gray-700">
-              {element.properties.text || "Label"}
-            </label>
-          </div>
-        )
-
-      case "video":
-        return (
-          <div style={style} className="flex items-center justify-center">
-            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <Play className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <div className="text-sm text-gray-600">Video Player</div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case "gallery":
-        return (
-          <div style={style} className="p-4">
-            <div className="grid grid-cols-2 gap-4 h-full">
-              <div className="bg-gray-200 rounded-lg flex items-center justify-center">
-                <ImageIcon className="w-8 h-8 text-gray-400" />
-              </div>
-              <div className="bg-gray-200 rounded-lg flex items-center justify-center">
-                <ImageIcon className="w-8 h-8 text-gray-400" />
-              </div>
-              <div className="bg-gray-200 rounded-lg flex items-center justify-center">
-                <ImageIcon className="w-8 h-8 text-gray-400" />
-              </div>
-              <div className="bg-gray-200 rounded-lg flex items-center justify-center">
-                <ImageIcon className="w-8 h-8 text-gray-400" />
-              </div>
-            </div>
-          </div>
-        )
-
-      case "slider":
-        return (
-          <div style={style} className="flex items-center justify-center">
-            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <div className="text-sm text-gray-600">Image Slider</div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case "modal":
-        return (
-          <div style={style} className="flex items-center justify-center">
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-lg max-w-sm">
-              <div className="text-center">
-                <div className="text-lg font-semibold mb-2">Modal Dialog</div>
-                <div className="text-sm text-gray-600 mb-4">This is a modal dialog component</div>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded">Close</button>
-              </div>
-            </div>
-          </div>
-        )
-
-      case "tooltip":
-        return (
-          <div style={style} className="flex items-center justify-center">
-            <div className="relative group">
-              <button className="bg-blue-600 text-white px-4 py-2 rounded">
-                Hover me
-              </button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Tooltip content
-              </div>
-            </div>
-          </div>
-        )
-
-      case "dropdown":
-        return (
-          <div style={style} className="flex items-center justify-center">
-            <div className="relative">
-              <button className="bg-white border border-gray-300 rounded-lg px-4 py-2 flex items-center space-x-2">
-                <span>Dropdown</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )
-
-      case "pricing":
-        return (
-          <div style={style} className="p-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
-              <div className="text-2xl font-bold mb-2">$29</div>
-              <div className="text-lg font-semibold mb-4">Pro Plan</div>
-              <ul className="text-sm text-gray-600 space-y-2">
-                <li>✓ Feature 1</li>
-                <li>✓ Feature 2</li>
-                <li>✓ Feature 3</li>
-              </ul>
-              <button className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg">Choose Plan</button>
-            </div>
-          </div>
-        )
-
-      case "testimonial":
-        return (
-          <div style={style} className="p-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="text-gray-600 mb-4">"This is an amazing product that has transformed our business completely!"</div>
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
-                <div>
-                  <div className="font-semibold">John Doe</div>
-                  <div className="text-sm text-gray-500">CEO, Company</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case "contact":
-        return (
-          <div style={style} className="p-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
-              <div className="space-y-4">
-                <input type="text" placeholder="Name" className="w-full px-3 py-2 border border-gray-300 rounded" />
-                <input type="email" placeholder="Email" className="w-full px-3 py-2 border border-gray-300 rounded" />
-                <textarea placeholder="Message" rows={3} className="w-full px-3 py-2 border border-gray-300 rounded"></textarea>
-                <button className="bg-blue-600 text-white px-6 py-2 rounded">Send Message</button>
-              </div>
-            </div>
-          </div>
-        )
-
-      case "newsletter":
-        return (
-          <div style={style} className="p-6">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6 text-center">
-              <h3 className="text-xl font-semibold mb-2">Stay Updated</h3>
-              <p className="mb-4">Subscribe to our newsletter for the latest updates</p>
-              <div className="flex space-x-2">
-                <input type="email" placeholder="Enter your email" className="flex-1 px-3 py-2 rounded text-gray-900" />
-                <button className="bg-white text-blue-600 px-4 py-2 rounded font-medium">Subscribe</button>
-              </div>
-            </div>
-          </div>
-        )
-
-      case "social":
-        return (
-          <div style={style} className="flex items-center justify-center">
-            <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700">
-                <span className="text-sm font-bold">f</span>
-              </a>
-              <a href="#" className="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-500">
-                <span className="text-sm font-bold">t</span>
-              </a>
-              <a href="#" className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center text-white hover:bg-pink-700">
-                <span className="text-sm font-bold">in</span>
-              </a>
             </div>
           </div>
         )
@@ -930,7 +1168,9 @@ export function Canvas({ deviceMode }: CanvasProps) {
             {deviceMode.charAt(0).toUpperCase() + deviceMode.slice(1)} View
           </span>
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
-          <span className="text-sm text-slate-600 dark:text-slate-400">{getCanvasWidth()}</span>
+          <span className="text-sm text-slate-600 dark:text-slate-400">
+            {canvasDimensions.width} × {canvasDimensions.height}
+          </span>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -944,23 +1184,29 @@ export function Canvas({ deviceMode }: CanvasProps) {
         </div>
       </div>
 
-      {/* Canvas Area */}
-      <div className="flex-1 overflow-auto p-8">
+      {/* Canvas Area with Scroll */}
+      <div className="flex-1 p-8 overflow-auto">
         <div className="flex justify-center">
           <div
             ref={canvasRef}
             className={cn(
-              "bg-white dark:bg-slate-800 shadow-lg rounded-lg relative overflow-hidden",
+              "bg-white dark:bg-slate-800 shadow-lg rounded-lg relative border-2 border-gray-300",
+              // Remove overflow-auto from here so the parent handles scrolling
               deviceMode === "mobile" && "max-w-[375px]",
               deviceMode === "tablet" && "max-w-[768px]",
               deviceMode === "desktop" && "w-full max-w-none",
             )}
             style={{
-              width: getCanvasWidth(),
-              height: getCanvasHeight(),
+              width: canvasDimensions.width,
+              height: canvasDimensions.height,
               transform: `scale(${zoom / 100})`,
               transformOrigin: "top center",
-              minHeight: "600px",
+              minWidth: deviceMode === "mobile" ? 375 : deviceMode === "tablet" ? 768 : 1200,
+              minHeight: 600,
+              // Add border styling
+              borderColor: "#d1d5db",
+              borderStyle: "solid",
+              borderWidth: "2px",
             }}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -1012,7 +1258,14 @@ export function Canvas({ deviceMode }: CanvasProps) {
                       if (!isDragging) return
                       const newX = moveEvent.clientX - (rect?.left || 0) - dragOffset.x
                       const newY = moveEvent.clientY - (rect?.top || 0) - dragOffset.y
-                      updateElement(element.id, { x: newX, y: newY })
+                      
+                      // Constrain to canvas boundaries
+                      const canvasWidth = canvasDimensions.width
+                      const canvasHeight = canvasDimensions.height
+                      const constrainedX = Math.max(0, Math.min(newX, canvasWidth - element.properties.width))
+                      const constrainedY = Math.max(0, Math.min(newY, canvasHeight - element.properties.height))
+                      
+                      updateElement(element.id, { x: constrainedX, y: constrainedY })
                     }
                     const handleMouseUp = () => {
                       isDragging = false
