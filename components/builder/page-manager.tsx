@@ -10,15 +10,32 @@ import { cn } from "@/lib/utils"
 import { createPage, updatePage, deletePage } from "@/lib/api/pages"
 import { toast } from "sonner"
 
+interface Page {
+  id: string
+  name: string
+  slug: string
+  isHomePage: boolean
+  components: any[]
+  createdAt: Date
+}
+
+interface Project {
+  id: string
+  title: string
+  description?: string
+  status: string
+  pages: Page[]
+}
+
 interface PageManagerProps {
-  project: any
-  currentPage: any
-  onPageChange: (page: any) => void
+  project: Project
+  currentPage: Page | null
+  onPageChange: (page: Page) => void
   onClose: () => void
 }
 
 export function PageManager({ project, currentPage, onPageChange, onClose }: PageManagerProps) {
-  const [pages, setPages] = useState(project.pages || [])
+  const [pages, setPages] = useState<Page[]>(project.pages || [])
   const [isCreating, setIsCreating] = useState(false)
   const [newPageName, setNewPageName] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -39,7 +56,7 @@ export function PageManager({ project, currentPage, onPageChange, onClose }: Pag
       })
 
       const pageWithComponents = { ...newPage, components: [] }
-      setPages((prev) => [...prev, pageWithComponents])
+      setPages((prev: Page[]) => [...prev, pageWithComponents])
       setNewPageName("")
       setIsCreating(false)
       toast.success("Page created successfully")
@@ -50,11 +67,11 @@ export function PageManager({ project, currentPage, onPageChange, onClose }: Pag
     }
   }
 
-  const handleSelectPage = (page: any) => {
+  const handleSelectPage = (page: Page) => {
     onPageChange(page)
   }
 
-  const handleEditPage = (page: any) => {
+  const handleEditPage = (page: Page) => {
     setEditingId(page.id)
     setEditingName(page.name)
   }
@@ -65,7 +82,7 @@ export function PageManager({ project, currentPage, onPageChange, onClose }: Pag
     setIsLoading(true)
     try {
       const updatedPage = await updatePage(editingId, { name: editingName.trim() })
-      setPages((prev) => prev.map((page) => (page.id === editingId ? { ...page, name: editingName.trim() } : page)))
+      setPages((prev: Page[]) => prev.map((page: Page) => (page.id === editingId ? { ...page, name: editingName.trim() } : page)))
       setEditingId(null)
       setEditingName("")
       toast.success("Page updated successfully")
@@ -82,7 +99,7 @@ export function PageManager({ project, currentPage, onPageChange, onClose }: Pag
       return
     }
 
-    const pageToDelete = pages.find((p) => p.id === pageId)
+    const pageToDelete = pages.find((p: Page) => p.id === pageId)
     if (pageToDelete?.isHomePage) {
       toast.error("Cannot delete the home page")
       return
@@ -91,8 +108,8 @@ export function PageManager({ project, currentPage, onPageChange, onClose }: Pag
     setIsLoading(true)
     try {
       await deletePage(pageId)
-      setPages((prev) => {
-        const filtered = prev.filter((page) => page.id !== pageId)
+      setPages((prev: Page[]) => {
+        const filtered = prev.filter((page: Page) => page.id !== pageId)
         // If we deleted the current page, switch to the first page
         if (currentPage?.id === pageId && filtered.length > 0) {
           onPageChange(filtered[0])
@@ -107,7 +124,7 @@ export function PageManager({ project, currentPage, onPageChange, onClose }: Pag
     }
   }
 
-  const handleDuplicatePage = async (page: any) => {
+  const handleDuplicatePage = async (page: Page) => {
     setIsLoading(true)
     try {
       const duplicatedPage = await createPage({
@@ -116,7 +133,7 @@ export function PageManager({ project, currentPage, onPageChange, onClose }: Pag
       })
 
       const pageWithComponents = { ...duplicatedPage, components: [] }
-      setPages((prev) => [...prev, pageWithComponents])
+      setPages((prev: Page[]) => [...prev, pageWithComponents])
       toast.success("Page duplicated successfully")
     } catch (error) {
       toast.error("Failed to duplicate page")
@@ -180,7 +197,7 @@ export function PageManager({ project, currentPage, onPageChange, onClose }: Pag
           )}
 
           {/* Pages List */}
-          {pages.map((page) => (
+          {pages.map((page: Page) => (
             <div
               key={page.id}
               className={cn(

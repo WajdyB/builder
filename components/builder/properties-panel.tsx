@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useRef, useEffect } from "react"
 import { useBuilderStore } from "@/lib/store/builder-store"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
@@ -40,6 +41,34 @@ import {
 
 export function PropertiesPanel() {
   const { selectedElement, updateElement, deleteElement, duplicateElement } = useBuilderStore()
+  
+  // Image upload state
+  const [uploading, setUploading] = useState(false)
+  const [uploadedImages, setUploadedImages] = useState<any[]>([])
+  const [showImageSelector, setShowImageSelector] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Get project ID from URL
+  const projectId = typeof window !== 'undefined' ? window.location.pathname.split('/')[2] : ''
+
+  const fetchUploadedImages = async () => {
+    if (!projectId) return
+    
+    try {
+      const response = await fetch(`/api/projects/${projectId}/images`)
+      if (response.ok) {
+        const data = await response.json()
+        setUploadedImages(data.images)
+      }
+    } catch (error) {
+      console.error('Error fetching images:', error)
+    }
+  }
+
+  // Load uploaded images when component mounts or projectId changes
+  useEffect(() => {
+    fetchUploadedImages()
+  }, [projectId])
 
   if (!selectedElement) {
     return (
@@ -143,7 +172,10 @@ export function PropertiesPanel() {
         </div>
         <div>
           <Label>Heading Level</Label>
-          <Select value={selectedElement.properties.headingLevel || "h1"} onValueChange={(value) => handlePropertyChange("headingLevel", value)}>
+          <Select value={selectedElement.properties.headingLevel || "h1"} onValueChange={(value) => {
+            console.log('Changing heading level to:', value)
+            handlePropertyChange("headingLevel", value)
+          }}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -156,6 +188,7 @@ export function PropertiesPanel() {
               <SelectItem value="h6">H6 - Tiny Heading</SelectItem>
             </SelectContent>
           </Select>
+          <div className="text-xs text-gray-500 mt-1">Current: {selectedElement.properties.headingLevel || "h1"}</div>
         </div>
         <div>
           <Label>Font Family</Label>
@@ -278,10 +311,11 @@ export function PropertiesPanel() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="default">Default (Blue Underline)</SelectItem>
               <SelectItem value="button">Button Style</SelectItem>
-              <SelectItem value="underline">Underline Only</SelectItem>
-              <SelectItem value="icon">Icon Link</SelectItem>
+              <SelectItem value="outline">Outline Style</SelectItem>
+              <SelectItem value="minimal">Minimal (Gray)</SelectItem>
+              <SelectItem value="accent">Accent (Purple)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -391,101 +425,248 @@ export function PropertiesPanel() {
     </>
   )
 
-  const renderImageProperties = () => (
-    <>
-      <div className="space-y-4">
-        <div>
-          <Label>Image URL</Label>
-          <Input
-            value={selectedElement.properties.src || ""}
-            onChange={(e) => handlePropertyChange("src", e.target.value)}
-            placeholder="https://example.com/image.jpg"
-          />
+  const renderImageProperties = () => {
+    const handleFileUpload = async (file: File) => {
+      if (!file || !projectId) return
+
+      setUploading(true)
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('projectId', projectId)
+
+        const response = await fetch('/api/upload/image', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          throw new Error('Upload failed')
+        }
+
+        const result = await response.json()
+        
+        // Update the image source to use the uploaded image
+        handlePropertyChange("src", `/api/images/${result.imageId}`)
+        handlePropertyChange("imageId", result.imageId)
+        
+        // Refresh uploaded images list
+        fetchUploadedImages()
+        
+      } catch (error) {
+        console.error('Upload error:', error)
+        alert('Failed to upload image. Please try again.')
+      } finally {
+        setUploading(false)
+      }
+    }
+
+    const handleImageSelect = (imageId: string) => {
+      handlePropertyChange("src", `/api/images/${imageId}`)
+      handlePropertyChange("imageId", imageId)
+      setShowImageSelector(false)
+    }
+
+    return (
+      <>
+        <div className="space-y-4">
+          <div>
+            <Label>Image Source</Label>
+            <div className="space-y-2">
+              <Input
+                value={selectedElement.properties.src || ""}
+                onChange={(e) => handlePropertyChange("src", e.target.value)}
+                placeholder="https://example.com/image.jpg or upload a file"
+              />
+              <div className="flex space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? "Uploading..." : "Upload Image"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowImageSelector(!showImageSelector)}
+                >
+                  Select from Uploaded
+                </Button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    handleFileUpload(file)
+                  }
+                }}
+                className="hidden"
+              />
+            </div>
+          </div>
+
+          {showImageSelector && uploadedImages.length > 0 && (
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <Label className="text-sm font-medium mb-2">Uploaded Images</Label>
+              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                               {uploadedImages.map((image: { id: string; originalName: string }) => (
+                 <div
+                   key={image.id}
+                   className="relative cursor-pointer border rounded p-1 hover:bg-gray-100"
+                   onClick={() => handleImageSelect(image.id)}
+                 >
+                    <img
+                      src={`/api/images/${image.id}`}
+                      alt={image.originalName}
+                      className="w-full h-16 object-cover rounded"
+                    />
+                    <div className="text-xs text-gray-500 truncate mt-1">
+                      {image.originalName}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <Label>Alt Text</Label>
+            <Input
+              value={selectedElement.properties.alt || ""}
+              onChange={(e) => handlePropertyChange("alt", e.target.value)}
+              placeholder="Describe the image..."
+            />
+          </div>
+          <div>
+            <Label>Image Style</Label>
+            <Select value={selectedElement.properties.imageStyle || "default"} onValueChange={(value) => handlePropertyChange("imageStyle", value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="rounded">Rounded</SelectItem>
+                <SelectItem value="circle">Circle</SelectItem>
+                <SelectItem value="bordered">Bordered</SelectItem>
+                <SelectItem value="shadow">With Shadow</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Object Fit</Label>
+            <Select value={selectedElement.properties.objectFit || "cover"} onValueChange={(value) => handlePropertyChange("objectFit", value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cover">Cover</SelectItem>
+                <SelectItem value="contain">Contain</SelectItem>
+                <SelectItem value="fill">Fill</SelectItem>
+                <SelectItem value="none">None</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={selectedElement.properties.lazy || false}
+              onCheckedChange={(checked) => handlePropertyChange("lazy", checked)}
+            />
+            <Label>Lazy Loading</Label>
+          </div>
         </div>
-        <div>
-          <Label>Alt Text</Label>
-          <Input
-            value={selectedElement.properties.alt || ""}
-            onChange={(e) => handlePropertyChange("alt", e.target.value)}
-            placeholder="Describe the image..."
-          />
-        </div>
-        <div>
-          <Label>Image Style</Label>
-          <Select value={selectedElement.properties.imageStyle || "default"} onValueChange={(value) => handlePropertyChange("imageStyle", value)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="rounded">Rounded</SelectItem>
-              <SelectItem value="circle">Circle</SelectItem>
-              <SelectItem value="bordered">Bordered</SelectItem>
-              <SelectItem value="shadow">With Shadow</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Object Fit</Label>
-          <Select value={selectedElement.properties.objectFit || "cover"} onValueChange={(value) => handlePropertyChange("objectFit", value)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="cover">Cover</SelectItem>
-              <SelectItem value="contain">Contain</SelectItem>
-              <SelectItem value="fill">Fill</SelectItem>
-              <SelectItem value="none">None</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={selectedElement.properties.lazy || false}
-            onCheckedChange={(checked) => handlePropertyChange("lazy", checked)}
-          />
-          <Label>Lazy Loading</Label>
-        </div>
-      </div>
-    </>
-  )
+      </>
+    )
+  }
 
   const renderHeroProperties = () => (
     <>
       <div className="space-y-4">
         <div>
-          <Label>Main Heading</Label>
-          <Input
-            value={selectedElement.properties.heading || ""}
-            onChange={(e) => handlePropertyChange("heading", e.target.value)}
-            placeholder="Enter main heading..."
-          />
+          <Label>Content Type</Label>
+          <Select value={selectedElement.properties.heroContent || "default"} onValueChange={(value) => handlePropertyChange("heroContent", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default Content</SelectItem>
+              <SelectItem value="custom">Custom Content</SelectItem>
+              <SelectItem value="empty">No Content</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div>
-          <Label>Subheading</Label>
-          <Textarea
-            value={selectedElement.properties.subheading || ""}
-            onChange={(e) => handlePropertyChange("subheading", e.target.value)}
-            placeholder="Enter subheading text..."
-            rows={3}
-          />
-        </div>
-        <div>
-          <Label>Button Text</Label>
-          <Input
-            value={selectedElement.properties.buttonText || ""}
-            onChange={(e) => handlePropertyChange("buttonText", e.target.value)}
-            placeholder="Get Started"
-          />
-        </div>
-        <div>
-          <Label>Button URL</Label>
-          <Input
-            value={selectedElement.properties.buttonUrl || ""}
-            onChange={(e) => handlePropertyChange("buttonUrl", e.target.value)}
-            placeholder="https://example.com"
-          />
-        </div>
+        {selectedElement.properties.heroContent === "custom" && (
+          <>
+            <div>
+              <Label>Hero Title</Label>
+              <Input
+                value={selectedElement.properties.heroTitle || ""}
+                onChange={(e) => handlePropertyChange("heroTitle", e.target.value)}
+                placeholder="Enter hero title..."
+              />
+            </div>
+            <div>
+              <Label>Hero Description</Label>
+              <Textarea
+                value={selectedElement.properties.heroDescription || ""}
+                onChange={(e) => handlePropertyChange("heroDescription", e.target.value)}
+                placeholder="Enter hero description..."
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Button Text</Label>
+              <Input
+                value={selectedElement.properties.heroButtonText || ""}
+                onChange={(e) => handlePropertyChange("heroButtonText", e.target.value)}
+                placeholder="Get Started"
+              />
+            </div>
+          </>
+        )}
+        {selectedElement.properties.heroContent === "default" && (
+          <>
+            <div>
+              <Label>Main Heading</Label>
+              <Input
+                value={selectedElement.properties.heading || ""}
+                onChange={(e) => handlePropertyChange("heading", e.target.value)}
+                placeholder="Enter main heading..."
+              />
+            </div>
+            <div>
+              <Label>Subheading</Label>
+              <Textarea
+                value={selectedElement.properties.subheading || ""}
+                onChange={(e) => handlePropertyChange("subheading", e.target.value)}
+                placeholder="Enter subheading text..."
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Button Text</Label>
+              <Input
+                value={selectedElement.properties.buttonText || ""}
+                onChange={(e) => handlePropertyChange("buttonText", e.target.value)}
+                placeholder="Get Started"
+              />
+            </div>
+            <div>
+              <Label>Button URL</Label>
+              <Input
+                value={selectedElement.properties.buttonUrl || ""}
+                onChange={(e) => handlePropertyChange("buttonUrl", e.target.value)}
+                placeholder="https://example.com"
+              />
+            </div>
+          </>
+        )}
         <div>
           <Label>Hero Style</Label>
           <Select value={selectedElement.properties.heroStyle || "default"} onValueChange={(value) => handlePropertyChange("heroStyle", value)}>
@@ -517,22 +698,60 @@ export function PropertiesPanel() {
     <>
       <div className="space-y-4">
         <div>
-          <Label>Logo Text</Label>
-          <Input
-            value={selectedElement.properties.logoText || ""}
-            onChange={(e) => handlePropertyChange("logoText", e.target.value)}
-            placeholder="Your Logo"
-          />
+          <Label>Content Type</Label>
+          <Select value={selectedElement.properties.navContent || "default"} onValueChange={(value) => handlePropertyChange("navContent", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default Content</SelectItem>
+              <SelectItem value="custom">Custom Content</SelectItem>
+              <SelectItem value="empty">No Content</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div>
-          <Label>Menu Items</Label>
-          <Textarea
-            value={selectedElement.properties.menuItems || ""}
-            onChange={(e) => handlePropertyChange("menuItems", e.target.value)}
-            placeholder="Home, About, Services, Contact"
-            rows={3}
-          />
-        </div>
+        {selectedElement.properties.navContent === "custom" && (
+          <>
+            <div>
+              <Label>Logo Text</Label>
+              <Input
+                value={selectedElement.properties.navLogoText || ""}
+                onChange={(e) => handlePropertyChange("navLogoText", e.target.value)}
+                placeholder="Your Logo"
+              />
+            </div>
+            <div>
+              <Label>Menu Items</Label>
+              <Textarea
+                value={selectedElement.properties.customMenuItems || ""}
+                onChange={(e) => handlePropertyChange("customMenuItems", e.target.value)}
+                placeholder="Home, About, Services, Contact"
+                rows={3}
+              />
+            </div>
+          </>
+        )}
+        {selectedElement.properties.navContent === "default" && (
+          <>
+            <div>
+              <Label>Logo Text</Label>
+              <Input
+                value={selectedElement.properties.logoText || ""}
+                onChange={(e) => handlePropertyChange("logoText", e.target.value)}
+                placeholder="Your Logo"
+              />
+            </div>
+            <div>
+              <Label>Menu Items</Label>
+              <Textarea
+                value={selectedElement.properties.menuItems || ""}
+                onChange={(e) => handlePropertyChange("menuItems", e.target.value)}
+                placeholder="Home, About, Services, Contact"
+                rows={3}
+              />
+            </div>
+          </>
+        )}
         <div>
           <Label>Navigation Style</Label>
           <Select value={selectedElement.properties.navStyle || "default"} onValueChange={(value) => handlePropertyChange("navStyle", value)}>
@@ -1669,6 +1888,40 @@ export function PropertiesPanel() {
             </SelectContent>
           </Select>
         </div>
+        <div>
+          <Label>Content Type</Label>
+          <Select value={selectedElement.properties.sectionContent || "default"} onValueChange={(value) => handlePropertyChange("sectionContent", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default Content</SelectItem>
+              <SelectItem value="custom">Custom Content</SelectItem>
+              <SelectItem value="empty">No Content</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {selectedElement.properties.sectionContent === "custom" && (
+          <>
+            <div>
+              <Label>Section Title</Label>
+              <Input
+                value={selectedElement.properties.sectionTitle || ""}
+                onChange={(e) => handlePropertyChange("sectionTitle", e.target.value)}
+                placeholder="Enter section title..."
+              />
+            </div>
+            <div>
+              <Label>Section Description</Label>
+              <Textarea
+                value={selectedElement.properties.sectionDescription || ""}
+                onChange={(e) => handlePropertyChange("sectionDescription", e.target.value)}
+                placeholder="Enter section description..."
+                rows={3}
+              />
+            </div>
+          </>
+        )}
       </div>
     </>
   )
@@ -1698,20 +1951,89 @@ export function PropertiesPanel() {
     <>
       <div className="space-y-4">
         <div>
-          <Label>Company Name</Label>
-          <Input
-            value={selectedElement.properties.companyName || ""}
-            onChange={(e) => handlePropertyChange("companyName", e.target.value)}
-            placeholder="Your Company"
-          />
+          <Label>Content Type</Label>
+          <Select value={selectedElement.properties.footerContent || "default"} onValueChange={(value) => handlePropertyChange("footerContent", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default Content</SelectItem>
+              <SelectItem value="custom">Custom Content</SelectItem>
+              <SelectItem value="empty">No Content</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+        {selectedElement.properties.footerContent === "custom" && (
+          <>
+            <div>
+              <Label>Company Name</Label>
+              <Input
+                value={selectedElement.properties.footerCompanyName || ""}
+                onChange={(e) => handlePropertyChange("footerCompanyName", e.target.value)}
+                placeholder="Your Company"
+              />
+            </div>
+            <div>
+              <Label>Copyright Text</Label>
+              <Input
+                value={selectedElement.properties.footerCopyrightText || ""}
+                onChange={(e) => handlePropertyChange("footerCopyrightText", e.target.value)}
+                placeholder="© 2024 All rights reserved"
+              />
+            </div>
+            <div>
+              <Label>Additional Text</Label>
+              <Textarea
+                value={selectedElement.properties.footerAdditionalText || ""}
+                onChange={(e) => handlePropertyChange("footerAdditionalText", e.target.value)}
+                placeholder="Additional footer text (optional)"
+                rows={2}
+              />
+            </div>
+          </>
+        )}
+        {selectedElement.properties.footerContent === "default" && (
+          <>
+            <div>
+              <Label>Company Name</Label>
+              <Input
+                value={selectedElement.properties.companyName || ""}
+                onChange={(e) => handlePropertyChange("companyName", e.target.value)}
+                placeholder="Your Company"
+              />
+            </div>
+            <div>
+              <Label>Copyright Text</Label>
+              <Input
+                value={selectedElement.properties.copyrightText || ""}
+                onChange={(e) => handlePropertyChange("copyrightText", e.target.value)}
+                placeholder="© 2024 All rights reserved"
+              />
+            </div>
+            <div>
+              <Label>Additional Text</Label>
+              <Textarea
+                value={selectedElement.properties.additionalText || ""}
+                onChange={(e) => handlePropertyChange("additionalText", e.target.value)}
+                placeholder="Additional footer text (optional)"
+                rows={2}
+              />
+            </div>
+          </>
+        )}
         <div>
-          <Label>Copyright Text</Label>
-          <Input
-            value={selectedElement.properties.copyrightText || ""}
-            onChange={(e) => handlePropertyChange("copyrightText", e.target.value)}
-            placeholder="© 2024 All rights reserved"
-          />
+          <Label>Footer Style</Label>
+          <Select value={selectedElement.properties.footerStyle || "default"} onValueChange={(value) => handlePropertyChange("footerStyle", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="minimal">Minimal</SelectItem>
+              <SelectItem value="modern">Modern</SelectItem>
+              <SelectItem value="dark">Dark Theme</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </>

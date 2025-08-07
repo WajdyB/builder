@@ -11,7 +11,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { properties, position } = await request.json()
+    const { properties, x, y, width, height, zIndex } = await request.json()
 
     // Verify component ownership
     const component = await prisma.component.findFirst({
@@ -33,7 +33,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       where: { id: params.id },
       data: {
         properties: properties || component.properties,
-        position: position || component.position,
+        x: x !== undefined ? x : component.x,
+        y: y !== undefined ? y : component.y,
+        width: width || component.width,
+        height: height || component.height,
+        zIndex: zIndex !== undefined ? zIndex : component.zIndex,
         updatedAt: new Date(),
       },
     })
