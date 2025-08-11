@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Undo2,
   Redo2,
@@ -20,12 +21,16 @@ import {
   ChevronDown,
   FileText,
   Loader2,
+  User,
+  Settings,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useBuilderStore } from "@/lib/store/builder-store"
 import { useTheme } from "next-themes"
+import { useSession } from "next-auth/react"
 import { updateProject, exportProject } from "@/lib/api/projects"
 import { toast } from "sonner"
+import Image from "next/image"
 
 interface BuilderHeaderProps {
   project: any
@@ -39,9 +44,31 @@ export function BuilderHeader({ project, currentPage, onTogglePageManager }: Bui
   const [isPreview, setIsPreview] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [profileData, setProfileData] = useState<any>(null)
 
   const { deviceMode, setDeviceMode, undo, redo, canUndo, canRedo, elements } = useBuilderStore()
   const { theme, setTheme } = useTheme()
+  const { data: session } = useSession()
+
+  // Fetch profile data when session changes
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchLatestProfile()
+    }
+  }, [session?.user?.id])
+
+  // Function to fetch latest profile data
+  const fetchLatestProfile = async () => {
+    try {
+      const response = await fetch('/api/user/profile')
+      if (response.ok) {
+        const data = await response.json()
+        setProfileData(data.user)
+      }
+    } catch (error) {
+      // Silently handle error, fallback to session data
+    }
+  }
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -121,30 +148,40 @@ export function BuilderHeader({ project, currentPage, onTogglePageManager }: Bui
 
         <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
 
-        {/* Project Name */}
-        {isEditing ? (
-          <Input
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            onBlur={handleNameSave}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleNameSave()
-              if (e.key === "Escape") {
-                setProjectName(project.title)
-                setIsEditing(false)
-              }
-            }}
-            className="w-48 h-8"
-            autoFocus
+        {/* Logo and Project Name */}
+        <div className="flex items-center space-x-2">
+          <Image
+            src="/logo.png"
+            alt="CMS-Builder Logo"
+            width={24}
+            height={24}
+            className="rounded-lg"
           />
-        ) : (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="text-lg font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          >
-            {projectName}
-          </button>
-        )}
+          {/* Project Name */}
+          {isEditing ? (
+            <Input
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              onBlur={handleNameSave}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleNameSave()
+                if (e.key === "Escape") {
+                  setProjectName(project.title)
+                  setIsEditing(false)
+                }
+              }}
+              className="w-48 h-8"
+              autoFocus
+            />
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-lg font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              {projectName}
+            </button>
+          )}
+        </div>
 
         <Button variant="ghost" size="sm" onClick={onTogglePageManager}>
           <FileText className="w-4 h-4 mr-2" />
@@ -233,6 +270,31 @@ export function BuilderHeader({ project, currentPage, onTogglePageManager }: Bui
           <Share className="w-4 h-4 mr-2" />
           Share
         </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar className="w-8 h-8 cursor-pointer hover:opacity-80 transition-opacity">
+              <AvatarImage src={profileData?.image || session?.user?.image} alt="Profile" />
+              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-green-500 text-white text-sm">
+                {profileData?.name ? profileData.name.charAt(0).toUpperCase() : session?.user?.name ? session.user.name.charAt(0).toUpperCase() : session?.user?.email?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="flex items-center">
+                <Settings className="w-4 h-4 mr-2" />
+                Profile Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard" className="flex items-center">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

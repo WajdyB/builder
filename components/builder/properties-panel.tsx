@@ -1930,6 +1930,80 @@ export function PropertiesPanel() {
     <>
       <div className="space-y-4">
         <div>
+          <Label>Content Type</Label>
+          <Select value={selectedElement.properties.cardContent || "default"} onValueChange={(value) => handlePropertyChange("cardContent", value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default Content</SelectItem>
+              <SelectItem value="custom">Custom Content</SelectItem>
+              <SelectItem value="empty">No Content</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {selectedElement.properties.cardContent === "custom" && (
+          <>
+            <div>
+              <Label>Card Title</Label>
+              <Input
+                value={selectedElement.properties.cardTitle || ""}
+                onChange={(e) => handlePropertyChange("cardTitle", e.target.value)}
+                placeholder="Enter card title..."
+              />
+            </div>
+            <div>
+              <Label>Card Description</Label>
+              <Textarea
+                value={selectedElement.properties.cardDescription || ""}
+                onChange={(e) => handlePropertyChange("cardDescription", e.target.value)}
+                placeholder="Enter card description..."
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Button Text</Label>
+              <Input
+                value={selectedElement.properties.cardButtonText || ""}
+                onChange={(e) => handlePropertyChange("cardButtonText", e.target.value)}
+                placeholder="Learn More"
+              />
+            </div>
+          </>
+        )}
+        
+        {selectedElement.properties.cardContent === "default" && (
+          <>
+            <div>
+              <Label>Card Title</Label>
+              <Input
+                value={selectedElement.properties.cardTitle || ""}
+                onChange={(e) => handlePropertyChange("cardTitle", e.target.value)}
+                placeholder="Card Title"
+              />
+            </div>
+            <div>
+              <Label>Card Description</Label>
+              <Textarea
+                value={selectedElement.properties.cardDescription || ""}
+                onChange={(e) => handlePropertyChange("cardDescription", e.target.value)}
+                placeholder="This is a sample card description that you can customize..."
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Button Text</Label>
+              <Input
+                value={selectedElement.properties.cardButtonText || ""}
+                onChange={(e) => handlePropertyChange("cardButtonText", e.target.value)}
+                placeholder="Learn More"
+              />
+            </div>
+          </>
+        )}
+        
+        <div>
           <Label>Card Style</Label>
           <Select value={selectedElement.properties.cardStyle || "default"} onValueChange={(value) => handlePropertyChange("cardStyle", value)}>
             <SelectTrigger>

@@ -50,24 +50,52 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const { title, description, status } = await request.json()
 
+    // Validate status if provided
+    if (status && !['DRAFT', 'PUBLISHED', 'ARCHIVED', 'REVIEW', 'MAINTENANCE', 'EXPORTED'].includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 })
+    }
+
+    const updateData: any = {
+      updatedAt: new Date(),
+    }
+
+    // Only update fields that are provided
+    if (title !== undefined) updateData.title = title
+    if (description !== undefined) updateData.description = description
+    if (status !== undefined) updateData.status = status
+
     const project = await prisma.project.updateMany({
       where: {
         id: params.id,
         userId: session.user.id,
       },
-      data: {
-        title,
-        description,
-        status,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     })
 
     if (project.count === 0) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true })
+    // Fetch and return the updated project
+    const updatedProject = await prisma.project.findFirst({
+      where: {
+        id: params.id,
+        userId: session.user.id,
+      },
+      include: {
+        pages: {
+          include: {
+            components: {
+              orderBy: {
+                createdAt: "asc",
+              },
+            },
+          },
+        },
+      },
+    })
+
+    return NextResponse.json(updatedProject)
   } catch (error) {
     console.error("Error updating project:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

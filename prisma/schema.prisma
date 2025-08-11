@@ -130,4 +130,8 @@ model Image {
 enum Status {
   DRAFT
   PUBLISHED
+  ARCHIVED
+  REVIEW
+  MAINTENANCE
+  EXPORTED
 }

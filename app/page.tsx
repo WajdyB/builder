@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles, Zap, Globe, Palette, Type, ImageIcon, Layout } from "lucide-react"
+import Image from "next/image"
 
 export default function LandingPage() {
   return (
@@ -10,9 +11,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-                <Palette className="w-5 h-5 text-white" />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="CMS-Builder Logo"
+                width={32}
+                height={32}
+                className="rounded-lg"
+              />
               <span className="text-xl font-bold text-gray-900">CMS-Builder</span>
             </div>
 
@@ -67,9 +72,13 @@ export default function LandingPage() {
                   {/* Top Bar */}
                   <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white/80">
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-                        <Palette className="w-5 h-5 text-white" />
-                      </div>
+                      <Image
+                        src="/logo.png"
+                        alt="CMS-Builder Logo"
+                        width={32}
+                        height={32}
+                        className="rounded-lg"
+                      />
                       <span className="font-bold text-gray-700">CMS-Builder</span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -159,9 +168,13 @@ export default function LandingPage() {
       <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-              <Palette className="w-5 h-5 text-white" />
-            </div>
+            <Image
+              src="/logo.png"
+              alt="CMS-Builder Logo"
+              width={32}
+              height={32}
+              className="rounded-lg"
+            />
             <span className="text-lg font-bold text-gray-900">CMS-Builder</span>
           </div>
           <div className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} CMS-Builder. All rights reserved.</div>

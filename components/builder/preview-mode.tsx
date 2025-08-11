@@ -209,6 +209,7 @@ export function PreviewMode({ isVisible, onClose }: PreviewModeProps) {
 
       case "card":
         const cardStyle = element.properties.cardStyle || "default"
+        const cardContent = element.properties.cardContent || "default"
         const cardVariants: Record<string, string> = {
           default: "bg-white border border-gray-200 shadow-sm",
           elevated: "bg-white shadow-lg hover:shadow-xl transition-shadow",
@@ -216,12 +217,41 @@ export function PreviewMode({ isVisible, onClose }: PreviewModeProps) {
           dark: "bg-gray-800 text-white border border-gray-700"
         }
         
+        const renderCardContent = () => {
+          switch (cardContent) {
+            case "custom":
+              return (
+                <div className="text-center">
+                  <div className="text-xl font-bold mb-2">{element.properties.cardTitle || "Card Title"}</div>
+                  <div className="text-sm text-gray-600">{element.properties.cardDescription || "This is a beautiful card component with customizable styling."}</div>
+                  {element.properties.cardButtonText && (
+                    <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition-colors">
+                      {element.properties.cardButtonText}
+                    </button>
+                  )}
+                </div>
+              )
+            case "empty":
+              return null
+            case "default":
+            default:
+              return (
+                <div className="text-center">
+                  <div className="text-xl font-bold mb-2">{element.properties.cardTitle || "Card Title"}</div>
+                  <div className="text-sm text-gray-600">{element.properties.cardDescription || "This is a beautiful card component with customizable styling."}</div>
+                  {element.properties.cardButtonText && (
+                    <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition-colors">
+                      {element.properties.cardButtonText}
+                    </button>
+                  )}
+                </div>
+              )
+          }
+        }
+        
         return (
           <div style={style} className={`p-6 rounded-lg ${cardVariants[cardStyle]}`}>
-            <div className="text-center">
-              <div className="text-xl font-bold mb-2">Card Title</div>
-              <div className="text-sm text-gray-600">This is a beautiful card component with customizable styling.</div>
-            </div>
+            {renderCardContent()}
           </div>
         )
 
@@ -625,69 +655,7 @@ export function PreviewMode({ isVisible, onClose }: PreviewModeProps) {
           </div>
         )
 
-      case "video":
-        const videoStyle = element.properties.videoStyle || "default"
-        const videoVariants: Record<string, string> = {
-          default: "bg-gray-200 rounded-lg",
-          modern: "bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg",
-          card: "bg-white border border-gray-200 rounded-lg shadow-sm"
-        }
-        
-        return (
-          <div style={style} className="flex items-center justify-center p-4">
-            <div className={`w-full h-full flex items-center justify-center ${videoVariants[videoStyle]}`}>
-              <div className="text-center">
-                <Play className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <div className="text-sm text-gray-600">{element.properties.videoTitle || "Video Player"}</div>
-                {element.properties.videoDescription && (
-                  <div className="text-xs text-gray-500 mt-1">{element.properties.videoDescription}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )
 
-      case "gallery":
-        const galleryStyle = element.properties.galleryStyle || "default"
-        const galleryVariants: Record<string, string> = {
-          default: "grid grid-cols-2 gap-4",
-          modern: "grid grid-cols-3 gap-3",
-          masonry: "columns-2 gap-4"
-        }
-        
-        return (
-          <div style={style} className="p-4">
-            <div className={galleryVariants[galleryStyle]}>
-              {[1, 2, 3, 4].map((index) => (
-                <div key={index} className="bg-gray-200 rounded-lg aspect-square flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-gray-400" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-
-      case "slider":
-        const sliderStyle = element.properties.sliderStyle || "default"
-        const sliderVariants: Record<string, string> = {
-          default: "bg-gray-200 rounded-lg",
-          modern: "bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg",
-          card: "bg-white border border-gray-200 rounded-lg shadow-sm"
-        }
-        
-        return (
-          <div style={style} className="flex items-center justify-center p-4">
-            <div className={`w-full h-full flex items-center justify-center ${sliderVariants[sliderStyle]}`}>
-              <div className="text-center">
-                <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <div className="text-sm text-gray-600">{element.properties.sliderTitle || "Image Slider"}</div>
-                {element.properties.sliderDescription && (
-                  <div className="text-xs text-gray-500 mt-1">{element.properties.sliderDescription}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )
 
       case "icon":
         const iconStyle = element.properties.iconStyle || "default"
@@ -1064,14 +1032,27 @@ export function PreviewMode({ isVisible, onClose }: PreviewModeProps) {
   }
 
   const getPreviewWidth = () => {
+    // CRITICAL: Use the exact same dimensions as the canvas
+    // This ensures perfect synchronization between builder and preview
     switch (deviceMode) {
       case "mobile":
         return "375px"
       case "tablet":
         return "768px"
       default:
-        return "800px" // Match the new canvas width
+        return "1200px" // Match the new canvas width
     }
+  }
+
+  const getPreviewHeight = () => {
+    // Use the same height calculation as canvas
+    if (elements.length === 0) {
+      return "600px"
+    }
+    
+    const maxY = Math.max(...elements.map(el => (el.properties.y || 0) + (el.properties.height || 0)))
+    const requiredHeight = Math.max(600, maxY + 100)
+    return `${requiredHeight}px`
   }
 
   return (
@@ -1107,10 +1088,18 @@ export function PreviewMode({ isVisible, onClose }: PreviewModeProps) {
             className="bg-white mx-auto relative"
             style={{ 
               width: getPreviewWidth(),
-              minHeight: "600px",
+              height: getPreviewHeight(),
               maxWidth: deviceMode === "desktop" ? "100%" : undefined
             }}
           >
+            {/* Device Boundary Indicator */}
+            <div className="absolute inset-0 border-2 border-dashed border-blue-300 pointer-events-none z-10">
+              <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                {deviceMode.charAt(0).toUpperCase() + deviceMode.slice(1)} ({getPreviewWidth()} × {getPreviewHeight()})
+              </div>
+            </div>
+            
+            {/* Components */}
             {elements.map((element) => (
               <div key={element.id}>
                 {renderComponent(element)}

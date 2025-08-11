@@ -24,8 +24,8 @@ export function Canvas({ deviceMode }: CanvasProps) {
   const getCanvasDimensions = () => {
     if (elements.length === 0) {
       return {
-        width: deviceMode === "mobile" ? 375 : deviceMode === "tablet" ? 768 : 800,
-        height: 300
+        width: deviceMode === "mobile" ? 375 : deviceMode === "tablet" ? 768 : 1200,
+        height: 600
       }
     }
 
@@ -35,16 +35,21 @@ export function Canvas({ deviceMode }: CanvasProps) {
     const minY = Math.min(...elements.map(el => el.properties.y || 0))
     const maxY = Math.max(...elements.map(el => (el.properties.y || 0) + (el.properties.height || 0)))
 
-    // Calculate required dimensions with padding
-    const requiredWidth = Math.max(
-      deviceMode === "mobile" ? 375 : deviceMode === "tablet" ? 768 : 800,
-      maxX + 100 // Add 100px padding
-    )
-    const requiredHeight = Math.max(300, maxY + 100) // Add 100px padding
+    // Get device constraints
+    const deviceWidth = deviceMode === "mobile" ? 375 : deviceMode === "tablet" ? 768 : 1200
+    const deviceHeight = 600
+
+    // Calculate required dimensions with padding, but NEVER exceed device constraints
+    const requiredWidth = Math.max(deviceWidth, maxX + 100) // Add 100px padding
+    const requiredHeight = Math.max(deviceHeight, maxY + 100) // Add 100px padding
+
+    // CRITICAL: Ensure canvas never exceeds device constraints
+    const constrainedWidth = Math.min(requiredWidth, deviceWidth)
+    const constrainedHeight = Math.max(deviceHeight, requiredHeight)
 
     return {
-      width: requiredWidth,
-      height: requiredHeight
+      width: constrainedWidth,
+      height: constrainedHeight
     }
   }
 
@@ -98,124 +103,31 @@ export function Canvas({ deviceMode }: CanvasProps) {
         height = Math.min(maxHeight, 200)
       } else if (componentData.id === "image") {
         width = Math.min(maxWidth, 250)
-        height = Math.min(maxHeight, 150)
-      } else if (componentData.id === "button") {
-        width = Math.min(maxWidth, 120)
-        height = Math.min(maxHeight, 40)
-      } else if (componentData.id === "text") {
-        width = Math.min(maxWidth, 200)
-        height = Math.min(maxHeight, 60)
-      } else if (componentData.id === "heading") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 80)
-      } else if (componentData.id === "paragraph") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 100)
-      } else if (componentData.id === "link") {
-        width = Math.min(maxWidth, 150)
-        height = Math.min(maxHeight, 40)
-      } else if (componentData.id === "hero") {
-        width = Math.min(maxWidth, 700)
-        height = Math.min(maxHeight, 300)
+        height = Math.min(maxHeight, 200)
       } else if (componentData.id === "navigation") {
-        width = Math.min(maxWidth, 700)
-        height = Math.min(maxHeight, 60)
+        width = Math.min(maxWidth, canvasWidth - 20) // Full width minus margins
+        height = Math.min(maxHeight, 80)
+      } else if (componentData.id === "hero") {
+        width = Math.min(maxWidth, canvasWidth - 20) // Full width minus margins
+        height = Math.min(maxHeight, 400)
       } else if (componentData.id === "footer") {
-        width = Math.min(maxWidth, 700)
-        height = Math.min(maxHeight, 100)
-      } else if (componentData.id === "card") {
-        width = Math.min(maxWidth, 250)
+        width = Math.min(maxWidth, canvasWidth - 20) // Full width minus margins
         height = Math.min(maxHeight, 150)
-      } else if (componentData.id === "input") {
-        width = Math.min(maxWidth, 250)
-        height = Math.min(maxHeight, 50)
-      } else if (componentData.id === "textarea") {
-        width = Math.min(maxWidth, 250)
+      } else {
+        width = Math.min(maxWidth, 200)
         height = Math.min(maxHeight, 100)
-      } else if (componentData.id === "checkbox") {
-        width = Math.min(maxWidth, 200)
-        height = Math.min(maxHeight, 40)
-      } else if (componentData.id === "radio") {
-        width = Math.min(maxWidth, 200)
-        height = Math.min(maxHeight, 40)
-      } else if (componentData.id === "select") {
-        width = Math.min(maxWidth, 200)
-        height = Math.min(maxHeight, 50)
-      } else if (componentData.id === "label") {
-        width = Math.min(maxWidth, 150)
-        height = Math.min(maxHeight, 30)
-      } else if (componentData.id === "divider") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 20)
-      } else if (componentData.id === "form") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 250)
-      } else if (componentData.id === "tabs") {
-        width = Math.min(maxWidth, 350)
-        height = Math.min(maxHeight, 120)
-      } else if (componentData.id === "accordion") {
-        width = Math.min(maxWidth, 350)
-        height = Math.min(maxHeight, 150)
-      } else if (componentData.id === "modal") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 200)
-      } else if (componentData.id === "tooltip") {
-        width = Math.min(maxWidth, 150)
-        height = Math.min(maxHeight, 50)
-      } else if (componentData.id === "dropdown") {
-        width = Math.min(maxWidth, 200)
-        height = Math.min(maxHeight, 50)
-      } else if (componentData.id === "video") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 200)
-      } else if (componentData.id === "gallery") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 200)
-      } else if (componentData.id === "slider") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 200)
-      } else if (componentData.id === "icon") {
-        width = Math.min(maxWidth, 100)
-        height = Math.min(maxHeight, 100)
-      } else if (componentData.id === "pricing") {
-        width = Math.min(maxWidth, 200)
-        height = Math.min(maxHeight, 250)
-      } else if (componentData.id === "testimonial") {
-        width = Math.min(maxWidth, 250)
-        height = Math.min(maxHeight, 150)
-      } else if (componentData.id === "contact") {
-        width = Math.min(maxWidth, 300)
-        height = Math.min(maxHeight, 200)
-      } else if (componentData.id === "newsletter") {
-        width = Math.min(maxWidth, 350)
-        height = Math.min(maxHeight, 120)
-      } else if (componentData.id === "social") {
-        width = Math.min(maxWidth, 200)
-        height = Math.min(maxHeight, 60)
-      } else if (componentData.id === "container") {
-        width = Math.min(maxWidth, 500)
-        height = Math.min(maxHeight, 200)
-      } else if (componentData.id === "grid") {
-        width = Math.min(maxWidth, 400)
-        height = Math.min(maxHeight, 200)
-      } else if (componentData.id === "flex") {
-        width = Math.min(maxWidth, 400)
-        height = Math.min(maxHeight, 200)
-      } else if (componentData.id === "sidebar") {
-        width = Math.min(maxWidth, 200)
-        height = Math.min(maxHeight, 300)
       }
       
-      // Ensure position keeps component fully within canvas boundaries
-      const finalX = Math.max(0, Math.min(x, canvasWidth - width))
-      const finalY = Math.max(0, Math.min(y, canvasHeight - height))
+      // CRITICAL: Constrain position to ensure component fits within canvas
+      const constrainedX = Math.max(20, Math.min(x, canvasWidth - width - 20))
+      const constrainedY = Math.max(20, Math.min(y, canvasHeight - height - 20))
 
       const newElement = {
         id: `${componentData.id}-${Date.now()}`,
         type: componentData.id,
         properties: {
-          x: finalX,
-          y: finalY,
+          x: constrainedX,
+          y: constrainedY,
           width,
           height,
           backgroundColor: "#ffffff",
@@ -604,6 +516,7 @@ export function Canvas({ deviceMode }: CanvasProps) {
 
       case "card":
         const cardStyle = element.properties.cardStyle || "default"
+        const cardContent = element.properties.cardContent || "default"
         const cardVariants = {
           default: "bg-white border border-gray-200 shadow-sm",
           elevated: "bg-white shadow-lg hover:shadow-xl transition-shadow",
@@ -611,12 +524,41 @@ export function Canvas({ deviceMode }: CanvasProps) {
           dark: "bg-gray-800 text-white border border-gray-700"
         }
         
+        const renderCardContent = () => {
+          switch (cardContent) {
+            case "custom":
+              return (
+                <div className="text-center">
+                  <div className="text-xl font-bold mb-2">{element.properties.cardTitle || "Card Title"}</div>
+                  <div className="text-sm text-gray-600 mb-4">{element.properties.cardDescription || "Enter your custom card description"}</div>
+                  {element.properties.cardButtonText && (
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                      {element.properties.cardButtonText}
+                    </button>
+                  )}
+                </div>
+              )
+            case "empty":
+              return null
+            case "default":
+            default:
+              return (
+                <div className="text-center">
+                  <div className="text-xl font-bold mb-2">{element.properties.cardTitle || "Card Title"}</div>
+                  <div className="text-sm text-gray-600 mb-4">{element.properties.cardDescription || "This is a beautiful card component with customizable styling."}</div>
+                  {element.properties.cardButtonText && (
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                      {element.properties.cardButtonText}
+                    </button>
+                  )}
+                </div>
+              )
+          }
+        }
+        
         return (
           <div style={style} className={`p-6 rounded-lg ${cardVariants[String(cardStyle) as keyof typeof cardVariants]}`}>
-            <div className="text-center">
-              <div className="text-xl font-bold mb-2">Card Title</div>
-              <div className="text-sm text-gray-600">This is a beautiful card component with customizable styling.</div>
-            </div>
+            {renderCardContent()}
           </div>
         )
 
@@ -2130,6 +2072,54 @@ export function Canvas({ deviceMode }: CanvasProps) {
             </button>
           </div>
         )}
+
+        {/* Device Boundary Warning */}
+        {(() => {
+          const outOfBoundsElements = elements.filter(el => {
+            const rightEdge = el.properties.x + el.properties.width
+            const bottomEdge = el.properties.y + el.properties.height
+            return rightEdge > canvasDimensions.width || bottomEdge > canvasDimensions.height
+          })
+          
+          if (outOfBoundsElements.length > 0) {
+            return (
+              <div className="absolute top-2 left-2 z-10">
+                <div className="bg-orange-100 border border-orange-300 text-orange-800 px-3 py-2 rounded-lg text-sm max-w-xs">
+                  <div className="font-medium mb-1">⚠️ Components Exceed Device Boundaries</div>
+                  <div className="text-xs mb-2">
+                    {outOfBoundsElements.length} component(s) extend beyond the {deviceMode} viewport.
+                    This will cause issues in preview and export.
+                  </div>
+                  <div className="text-xs text-orange-600 mb-2">
+                    Tip: Resize or reposition components to fit within the device boundaries.
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Auto-fit all components to device boundaries
+                      outOfBoundsElements.forEach(el => {
+                        const newWidth = Math.min(el.properties.width, canvasDimensions.width - 40)
+                        const newHeight = Math.min(el.properties.height, canvasDimensions.height - 40)
+                        const newX = Math.min(el.properties.x, canvasDimensions.width - newWidth - 20)
+                        const newY = Math.min(el.properties.y, canvasDimensions.height - newHeight - 20)
+                        
+                        updateElement(el.id, {
+                          width: newWidth,
+                          height: newHeight,
+                          x: newX,
+                          y: newY,
+                        })
+                      })
+                    }}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                  >
+                    🔧 Auto-Fit to Device
+                  </button>
+                </div>
+              </div>
+            )
+          }
+          return null
+        })()}
         <div className="p-4 flex justify-center items-start" style={{ 
           minHeight: `${Math.max(canvasDimensions.height * (zoom / 100) + 200, 800)}px`,
           width: '100%'
@@ -2170,6 +2160,13 @@ export function Canvas({ deviceMode }: CanvasProps) {
                 backgroundSize: "20px 20px",
               }}
             />
+
+            {/* Device Boundary Indicator */}
+            <div className="absolute inset-0 border-2 border-dashed border-blue-300 pointer-events-none z-10">
+              <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                {deviceMode.charAt(0).toUpperCase() + deviceMode.slice(1)} Viewport
+              </div>
+            </div>
 
             {/* Render Elements */}
             {elements.map((element) => {
