@@ -30,7 +30,6 @@ import { useTheme } from "next-themes"
 import { useSession } from "next-auth/react"
 import { updateProject, exportProject } from "@/lib/api/projects"
 import { toast } from "sonner"
-import Image from "next/image"
 
 interface BuilderHeaderProps {
   project: any
@@ -150,13 +149,6 @@ export function BuilderHeader({ project, currentPage, onTogglePageManager }: Bui
 
         {/* Logo and Project Name */}
         <div className="flex items-center space-x-2">
-          <Image
-            src="/logo.png"
-            alt="CMS-Builder Logo"
-            width={24}
-            height={24}
-            className="rounded-lg"
-          />
           {/* Project Name */}
           {isEditing ? (
             <Input

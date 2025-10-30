@@ -9,13 +9,8 @@ import { SessionProvider } from "@/components/session-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "FrameBuilder - Visual Website Builder",
+  title: "CMS-Builder - Visual Website Builder",
   description: "Create stunning websites with our visual drag-and-drop builder",
-  icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
-  },
 }
 
 export default function RootLayout({

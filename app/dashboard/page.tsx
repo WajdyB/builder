@@ -51,7 +51,6 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { fetchProjects, createProject, deleteProject } from "@/lib/api/projects"
 import { toast } from "sonner"
-import Image from "next/image"
 
 // Enhanced Project Interface with more states
 interface Project {
@@ -490,13 +489,6 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
-              <Image
-                src="/logo.png"
-                alt="CMS-Builder Logo"
-                width={32}
-                height={32}
-                className="rounded-lg"
-              />
               <span className="text-xl font-bold text-gray-900">CMS-Builder</span>
             </div>
 

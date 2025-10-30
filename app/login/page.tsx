@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Palette, Eye, EyeOff, Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import Image from "next/image"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("bouonwajdy@gmail.com")
@@ -48,13 +47,6 @@ export default function LoginPage() {
       <Card className="w-full max-w-md border-gray-200 shadow-xl">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Image
-              src="/logo.png"
-              alt="CMS-Builder Logo"
-              width={32}
-              height={32}
-              className="rounded-lg"
-            />
             <span className="text-xl font-bold text-gray-900">CMS-Builder</span>
           </div>
           <CardTitle className="text-2xl text-gray-900">Welcome back</CardTitle>
